@@ -2,8 +2,9 @@
 
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Environment, Float, Preload } from '@react-three/drei';
+import { useGLTF, Environment, Float, Preload, Sparkles } from '@react-three/drei';
 import gsap from 'gsap';
+import * as THREE from 'three';
 import { use3DStore } from '@/store/use3DStore';
 
 // Global mouse tracker for smooth pointer handling
@@ -46,6 +47,19 @@ function Model({ url }) {
         // Cache original transforms
         child.userData.initPos = child.position.clone();
         child.userData.initRot = child.rotation.clone();
+        
+        // Improve visuals to match the Intro style
+        if (child.material) {
+          child.material = child.material.clone();
+          if (!child.material.emissive) child.material.emissive = new THREE.Color(0x000000);
+          
+          // Make it glow orange except for the outer frame if possible
+          // We apply a baseline glow to give it that premium feel
+          child.material.emissive.setRGB(1, 0.24, 0.06).multiplyScalar(0.4);
+          child.material.transparent = true;
+          child.material.needsUpdate = true;
+        }
+        
         arr.push(child);
       }
     });
@@ -225,6 +239,8 @@ function Model({ url }) {
   return (
     <group ref={groupRef} scale={[3.5, 3.5, 3.5]}>
       <primitive object={scene} />
+      {/* Add particles matching the intro */}
+      <Sparkles count={400} scale={20} size={5} speed={0.2} opacity={0.3} color="#ffaa55" />
     </group>
   );
 }

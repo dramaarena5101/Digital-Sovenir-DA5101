@@ -13,6 +13,7 @@ import Sponsors from "@/components/guidebook/Sponsors";
 import { Ticker, Footer } from "@/components/guidebook/Footer";
 import Hero3DModel from "@/components/ui/Hero3DModel";
 import { use3DStore } from "@/store/use3DStore";
+import StorytellingIntro from "@/components/guidebook/StorytellingIntro";
 
 function SectionWatcher({ name, children }) {
   const ref = useRef(null);
@@ -32,6 +33,11 @@ export default function GuidebookTheme({
   user, isActivated, settings, logoSrc, visibleFeatures, handleCTA, router
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+
+  if (showIntro) {
+    return <StorytellingIntro onComplete={() => setShowIntro(false)} />;
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "transparent", color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif", position: "relative" }}>
@@ -41,7 +47,7 @@ export default function GuidebookTheme({
       <LoadingScreen onDone={() => setLoaded(true)} />
       {loaded && (
         <div style={{ position: "relative", zIndex: 10 }}>
-          <Navbar />
+          <Navbar onReplayIntro={() => setShowIntro(true)} />
           
           <SectionWatcher name="hero"><Hero /></SectionWatcher>
           <Ticker />

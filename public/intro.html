@@ -1,0 +1,1383 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DRAMA ARENA 5101 — Lambang Tim</title>
+  <meta name="description"
+    content="Lambang 3D interaktif Drama Arena 5101 — bongkar, rakit, dan telusuri arti tiap bagian lewat scroll.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="icon" href="logo-flat.png">
+  <style>
+    :root {
+      --ink: #0A0810;
+      --ink-2: #141019;
+      --paper: #F3EEE4;
+      --paper-dim: #C9C2B4;
+      --accent: #FF3A12;
+      --accent-deep: #8C1F06;
+      --line: rgba(243, 238, 228, 0.14);
+      --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      --body: 'Inter', system-ui, sans-serif;
+      --disp: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--body);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    ::selection {
+      background: var(--accent);
+      color: var(--ink);
+    }
+
+    /* ---------- loader ---------- */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(120% 120% at 50% 40%, #17111f 0%, #0A0810 70%);
+      transition: opacity .8s ease, visibility .8s ease;
+      gap: 22px;
+    }
+
+    #loader img {
+      width: min(38vw, 180px);
+      filter: drop-shadow(0 0 40px rgba(255, 58, 18, .35));
+      opacity: .94;
+      animation: breathe 2.6s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.035);
+      }
+    }
+
+    #loader .bar {
+      width: 180px;
+      height: 2px;
+      background: var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #loader .bar span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      background: var(--accent);
+      transition: width .2s ease;
+    }
+
+    #loader .lbl {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .18em;
+      color: var(--paper-dim);
+      text-transform: uppercase;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* ---------- 3d canvas layer ---------- */
+    #canvas-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    #canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .spot {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(60% 50% at 50% 42%, rgba(255, 58, 18, 0.14), transparent 70%),
+        radial-gradient(120% 90% at 50% 100%, rgba(0, 0, 0, 0.75), transparent 60%),
+        radial-gradient(120% 90% at 50% 0%, rgba(0, 0, 0, 0.55), transparent 55%);
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: .05;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    }
+
+    /* ---------- nav ---------- */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px clamp(20px, 5vw, 56px);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .14em;
+      pointer-events: none;
+      mix-blend-mode: difference;
+    }
+
+    nav .mark {
+      pointer-events: auto;
+      font-weight: 500;
+    }
+
+    nav .mark b {
+      color: var(--accent);
+      mix-blend-mode: normal;
+    }
+
+    nav ul {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      pointer-events: auto;
+    }
+
+    nav a {
+      text-decoration: none;
+      opacity: .8;
+      transition: opacity .2s;
+    }
+
+    nav a:hover,
+    nav a:focus-visible {
+      opacity: 1;
+    }
+
+    nav a:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    @media (max-width:640px) {
+      nav ul {
+        display: none;
+      }
+    }
+
+    .progress-rail {
+      position: fixed;
+      right: 22px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2px;
+      height: 120px;
+      background: var(--line);
+      z-index: 50;
+    }
+
+    .progress-rail i {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 0%;
+      background: var(--accent);
+      display: block;
+    }
+
+    @media (max-width:640px) {
+      .progress-rail {
+        display: none;
+      }
+    }
+
+    /* ---------- content ---------- */
+    main {
+      position: relative;
+      z-index: 5;
+    }
+
+    .step {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 clamp(20px, 7vw, 90px);
+      position: relative;
+    }
+
+    .step .panel {
+      max-width: 560px;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .9s cubic-bezier(.2, .7, .2, 1), transform .9s cubic-bezier(.2, .7, .2, 1);
+    }
+
+    .step.in-view .panel {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .step.align-right {
+      justify-content: flex-end;
+    }
+
+    .step.align-right .panel {
+      text-align: right;
+      margin-left: auto;
+    }
+
+    .step.align-center {
+      justify-content: center;
+    }
+
+    .step.align-center .panel {
+      text-align: center;
+      max-width: 640px;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step.align-right .eyebrow {
+      justify-content: flex-end;
+    }
+
+    .step.align-center .eyebrow {
+      justify-content: center;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 16px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .step.align-right .eyebrow::before {
+      order: 2;
+    }
+
+    h1,
+    h2 {
+      font-family: var(--disp);
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 0.94;
+      letter-spacing: .005em;
+      margin: 0 0 18px;
+    }
+
+    h1 {
+      font-size: clamp(46px, 9.5vw, 108px);
+    }
+
+    h2 {
+      font-size: clamp(32px, 5.4vw, 58px);
+    }
+
+    .step p {
+      font-size: 16.5px;
+      line-height: 1.65;
+      color: var(--paper-dim);
+      margin: 0;
+      max-width: 480px;
+    }
+
+    .step.align-right p {
+      margin-left: auto;
+    }
+
+    .step.align-center p {
+      margin: 0 auto;
+    }
+
+    .hero-sub {
+      font-family: var(--disp);
+      font-weight: 600;
+      text-transform: none;
+      font-size: clamp(17px, 2.2vw, 22px);
+      color: var(--paper);
+      margin: 0 0 30px;
+      max-width: 520px;
+      line-height: 1.35;
+    }
+
+    .scrollcue {
+      position: absolute;
+      left: clamp(20px, 7vw, 90px);
+      bottom: 44px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .18em;
+      color: var(--paper-dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+      opacity: 1;
+      transition: opacity .5s ease;
+    }
+
+    .scrollcue .chev {
+      display: inline-block;
+      animation: bob 1.8s ease-in-out infinite;
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(6px);
+      }
+    }
+
+    body.scrolled .scrollcue {
+      opacity: 0;
+    }
+
+    .credit {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .14em;
+      color: var(--paper-dim);
+      text-transform: uppercase;
+      margin-top: 34px;
+      opacity: .7;
+    }
+
+    .tag-list {
+      display: flex;
+      gap: 10px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    .step.align-right .tag-list {
+      justify-content: flex-end;
+    }
+
+    .tag {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      color: var(--paper-dim);
+    }
+
+    footer {
+      position: relative;
+      z-index: 5;
+      padding: 60px clamp(20px, 7vw, 90px) 46px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      color: var(--paper-dim);
+      text-transform: uppercase;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .step .panel {
+        transition: opacity .4s linear;
+        transform: none !important;
+      }
+
+      .scrollcue .chev {
+        animation: none;
+      }
+
+      #loader img {
+        animation: none;
+      }
+    }
+
+    body.puzzle-mode {
+      overflow: hidden !important;
+    }
+
+    body.puzzle-mode main,
+    body.puzzle-mode nav,
+    body.puzzle-mode .progress-rail,
+    body.puzzle-mode #test-activation {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity 1s ease;
+    }
+
+    #puzzle-blueprint {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(100px, 16vw, 160px);
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease;
+      display: none;
+    }
+
+    body.puzzle-mode #puzzle-blueprint {
+      display: block;
+    }
+
+    body.puzzle-mode.show-blueprint #puzzle-blueprint {
+      animation: pulseBlueprint 2s infinite alternate;
+    }
+
+    @keyframes pulseBlueprint {
+      0% {
+        filter: brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(350deg) drop-shadow(0 0 1px rgba(255, 90, 34, 0.6)) drop-shadow(0 0 10px rgba(255, 90, 34, 0.2));
+        opacity: 0.08;
+      }
+
+      100% {
+        filter: brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(350deg) drop-shadow(0 0 2px rgba(255, 90, 34, 1.0)) drop-shadow(0 0 20px rgba(255, 90, 34, 0.6));
+        opacity: 0.18;
+      }
+    }
+  </style>
+</head>
+
+<body class="puzzle-mode">
+
+  <div id="loader">
+    <img src="logo-flat.png" alt="Lambang Drama Arena 5101">
+    <div class="bar"><span id="loaderbar"></span></div>
+    <div class="lbl" id="loaderlbl">Selamat Datang</div>
+  </div>
+
+  <img id="puzzle-blueprint" src="logo-flat.png" alt="Blueprint">
+
+  <!-- 3D Background Canvas -->
+  <div class="spot"></div>
+  <div id="canvas-wrap"></div>
+  <div class="grain"></div>
+
+  <!-- Activation Sequence Overlay -->
+  <div id="activation-ui"
+    style="display:none; position:fixed; inset:0; z-index:100; background:rgba(12, 10, 16, 0.95); flex-direction:column; justify-content:center; align-items:center; opacity:0; transition: opacity 1.2s ease-in-out;">
+    <h2
+      style="color:#ff5a22; font-size: clamp(2rem, 5vw, 4rem); font-family: 'Outfit', sans-serif; margin-bottom: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
+      ✨ Activation Successful ✨</h2>
+    <p
+      style="color:#fff; font-size: clamp(1rem, 2vw, 1.5rem); font-family: 'Inter', sans-serif; opacity: 0.8; letter-spacing: 1px;">
+      Welcome to Digital Souvenir Drama Arena 5101</p>
+  </div>
+
+  <nav>
+    <div class="mark">DA·<b>5101</b></div>
+    <ul>
+      <li><a href="#step-1">Lambang</a></li>
+      <li><a href="#step-2">Struktur</a></li>
+      <li><a href="#step-5">Kredit</a></li>
+    </ul>
+  </nav>
+  <div class="progress-rail"><i id="progressFill"></i></div>
+
+  <main>
+    <section class="step" id="step-0">
+      <div class="panel">
+        <p class="eyebrow">Pentas Seni Darussalam — Tim 5101</p>
+        <h1>Drama<br>Arena<br>5101</h1>
+        <p class="hero-sub">Satu bingkai, empat penjuru, satu jiwa yang menyala di tengah panggung.</p>
+      </div>
+      <div class="scrollcue"><span class="chev">↓</span> Gulir untuk merakit lambang</div>
+    </section>
+
+    <section class="step align-right" id="step-1">
+      <div class="panel">
+        <p class="eyebrow">Tentang Lambang</p>
+        <h2>Di Balik Layar</h2>
+        <p>Setiap momen, keringat, dan tawa di balik panggung kini terekam selamanya — namun cuma punya satu bentuk kalau bersatu. Tiap
+          potongan hitam dan oranye di sini mewakili cara barisan 5101 bergerak: terpisah saat berlatih, menyatu saat
+          tampil.</p>
+      </div>
+    </section>
+
+    <section class="step" id="step-2">
+      <div class="panel">
+        <p class="eyebrow">Bagian 01 — Bingkai</p>
+        <h2>Galeri Kenangan</h2>
+        <p>Empat lengan hitam yang saling mengunci ini adalah batas kami — bukan untuk mengurung, tapi untuk menahan
+          tekanan panggung, supaya bagian lain bisa tampil sepenuhnya.</p>
+      </div>
+    </section>
+
+    <section class="step align-right" id="step-3">
+      <div class="panel">
+        <p class="eyebrow">Bagian 02 — Inti</p>
+        <h2>Video Penampilan</h2>
+        <p>Satu wajik oranye di titik pusat. Ini jiwa pertunjukan — paling kecil, tapi paling terang, dan jadi alasan
+          semua bagian lain rela memberi ruang.</p>
+      </div>
+    </section>
+
+    <section class="step" id="step-4">
+      <div class="panel">
+        <p class="eyebrow">Bagian 03–06 — Empat Sudut</p>
+        <h2>Karya & Soundtrack</h2>
+        <p>Empat pecahan di setiap penjuru bingkai — arahnya berbeda, tapi geraknya sama. Naskah, panggung, kostum, tata
+          cahaya: empat peran, satu barisan.</p>
+        <div class="tag-list">
+          <span class="tag">Naskah</span><span class="tag">Panggung</span><span class="tag">Kostum</span><span
+            class="tag">Cahaya</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="step align-center" id="step-5">
+      <div class="panel">
+        <p class="eyebrow">5101</p>
+        <h2>Mari Mulai Perjalanan</h2>
+        <p>Akses semua konten eksklusif ini sekarang. Memori ini adalah milik Anda selamanya. — dan lambang ini adalah cara kami menandatangani
+          setiap pertunjukan.</p>
+        <div class="credit">Rancangan 3D &amp; Identitas Visual — Drama Arena 5101</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© Drama Arena 5101</span>
+    <span>Pentas Seni Darussalam</span>
+  </footer>
+
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.1/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.1/examples/jsm/"
+  }
+}
+</script>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* ---------------- Audio Synthesizer ---------------- */
+    const Synth = {
+      ctx: null,
+      init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      },
+      playIntro() {
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        const t = this.ctx.currentTime;
+
+        // Suction (Inverse Sweep)
+        const oscV = this.ctx.createOscillator();
+        const gainV = this.ctx.createGain();
+        oscV.type = 'sine';
+        oscV.frequency.setValueAtTime(50, t);
+        oscV.frequency.exponentialRampToValueAtTime(800, t + 2.5);
+        gainV.gain.setValueAtTime(0, t);
+        gainV.gain.linearRampToValueAtTime(0.2, t + 2.4);
+        gainV.gain.exponentialRampToValueAtTime(0.01, t + 2.5);
+        oscV.connect(gainV); gainV.connect(this.ctx.destination);
+        oscV.start(t); oscV.stop(t + 2.5);
+
+        // Sub-bass drop (Impact)
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, t + 2.5);
+        osc.frequency.exponentialRampToValueAtTime(30, t + 3.7);
+        gain.gain.setValueAtTime(0, t + 2.5);
+        gain.gain.linearRampToValueAtTime(0.6, t + 2.6);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 4.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t + 2.5);
+        osc.stop(t + 4.5);
+
+        // Noise burst (metallic hiss)
+        const bufferSize = this.ctx.sampleRate * 2.0;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(400, t + 2.5);
+        filter.frequency.exponentialRampToValueAtTime(4000, t + 3.5);
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0, t + 2.5);
+        noiseGain.gain.linearRampToValueAtTime(0.3, t + 2.6);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 4.0);
+        noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(this.ctx.destination);
+        noise.start(t + 2.5);
+      },
+      playAwakening() {
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        const t = this.ctx.currentTime;
+
+        // Sub-bass drop (Impact)
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.exponentialRampToValueAtTime(30, t + 1.2);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.6, t + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 2.0);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 2.0);
+
+        // Noise burst (metallic hiss)
+        const bufferSize = this.ctx.sampleRate * 2.0;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(400, t);
+        filter.frequency.exponentialRampToValueAtTime(4000, t + 1.0);
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0, t);
+        noiseGain.gain.linearRampToValueAtTime(0.3, t + 0.1);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+        noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(this.ctx.destination);
+        noise.start(t);
+      },
+      playClick() {
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        const t = this.ctx.currentTime;
+
+        // "UI Interface" crisp tech blip
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2000, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.08);
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.08);
+      },
+      playTypewriter() {
+        // "UI Alert" short soft tone
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800 + Math.random() * 50, t);
+        gain.gain.setValueAtTime(0.02, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.05);
+      }
+    };
+
+    let isAudioInited = false;
+    const initAudio = () => {
+      if (isAudioInited) return;
+      Synth.init();
+      if (Synth.ctx.state === 'suspended') Synth.ctx.resume();
+      Synth.playIntro();
+      isAudioInited = true;
+      removeEventListener('pointerdown', initAudio);
+      removeEventListener('keydown', initAudio);
+      removeEventListener('touchstart', initAudio);
+      removeEventListener('wheel', initAudio);
+    };
+    addEventListener('pointerdown', initAudio);
+    addEventListener('keydown', initAudio);
+    addEventListener('touchstart', initAudio, { passive: true });
+    addEventListener('wheel', initAudio, { passive: true });
+
+    /* ---------------- renderer / scene ---------------- */
+    const wrap = document.getElementById("canvas-wrap");
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    wrap.appendChild(renderer.domElement);
+
+    const clock = new THREE.Clock();
+
+    /* ---------------- setup scene & lighting ---------------- */
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 9);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    const keyLight = new THREE.DirectionalLight(0xfff2e6, 2.4);
+    keyLight.position.set(4, 5, 6);
+    scene.add(keyLight);
+
+    const rim = new THREE.PointLight(0xff5a22, 6, 20, 2);
+    rim.position.set(-4, -2, 4);
+    scene.add(rim);
+
+    const fill = new THREE.AmbientLight(0x201826, 1.1);
+    scene.add(fill);
+
+    /* ---------------- background particles ---------------- */
+    const partCount = 700;
+    const partGeo = new THREE.BufferGeometry();
+    const posArray = new Float32Array(partCount * 3);
+    for (let i = 0; i < partCount * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 20;
+    }
+    partGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const partMat = new THREE.PointsMaterial({
+      size: 0.04, color: 0xffaa55, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(partGeo, partMat);
+    scene.add(particles);
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    /* ---------------- per-part config ---------------- */
+    const PARTKEYS = ["frame", "mid", "p1", "p2", "p3", "p4"];
+    const EXPLODE_SCALE = { frame: 2.6, mid: 1.4, p1: 1.7, p2: 1.7, p3: 1.7, p4: 1.7 };
+    const PART_CONFIG = {
+      frame: { depth: 0.34, tilt: 0.045, delay: 0.00, duration: 2.5 },
+      mid: { depth: 1.00, tilt: 0.100, delay: 0.20, duration: 2.3 },
+      p1: { depth: 0.62, tilt: 0.070, delay: 0.60, duration: 1.9 },
+      p2: { depth: 0.70, tilt: 0.070, delay: 0.60, duration: 1.9 },
+      p3: { depth: 0.78, tilt: 0.070, delay: 0.60, duration: 1.9 },
+      p4: { depth: 0.86, tilt: 0.070, delay: 0.60, duration: 1.9 },
+    };
+
+    const partsByKey = {};
+    const nodeMap = { "Frame_logo": "frame", "mid_path": "mid", "path_1": "p1", "path_2": "p2", "path_3": "p3", "path_4": "p4" };
+    const explodeDir = {};
+    const basePos = {};
+
+    const PUZZLE_OFFSETS = {
+      frame: new THREE.Vector3(-1.8, 1.2, 0),
+      mid: new THREE.Vector3(1.8, 1.2, 0),
+      p1: new THREE.Vector3(-1.4, -1.6, 0),
+      p2: new THREE.Vector3(1.4, -1.6, 0),
+      p3: new THREE.Vector3(0, -2.0, 0),
+      p4: new THREE.Vector3(0, 2.0, 0),
+    };
+
+    /* live per-part animation state (springs) */
+    const runtime = {};
+    PARTKEYS.forEach((k, i) => {
+      runtime[k] = {
+        ex: 1.0, exVel: 0, op: 0,
+        tiltX: (Math.random() - 0.5) * 2, tiltY: (Math.random() - 0.5) * 2,
+        phase: i * 1.7, currentScale: 0.55,
+        dragX: 0, dragY: 0, dragVelX: 0, dragVelY: 0, targetDragX: 0, targetDragY: 0,
+        spin: (Math.random() - 0.5) * 2, spinVel: 0,
+        isSnapped: false
+      };
+    });
+
+    /* ---------------- interaction & raycaster ---------------- */
+    const raycaster = new THREE.Raycaster();
+    let isHovered = false;
+
+    let isActivating = false;
+    let isPuzzleActive = false;
+    let activationElapsed = 0;
+
+    document.getElementById("test-activation")?.addEventListener("click", () => {
+      isActivating = true;
+      activationElapsed = 0;
+      document.getElementById("activation-ui").style.display = 'flex';
+      for (const k of PARTKEYS) {
+        runtime[k].ex = EXPLODE_SCALE[k] * 4.0;
+        runtime[k].exVel = 0;
+        runtime[k].tiltX = (Math.random() - 0.5) * 2;
+        runtime[k].tiltY = (Math.random() - 0.5) * 2;
+      }
+      setTimeout(() => document.getElementById("activation-ui").style.opacity = '1', 100);
+    });
+
+    let pointerTX = 0, pointerTY = 0;
+
+    // Drag state
+    let isDraggingScene = false;
+    let isDraggingPart = false;
+    let draggedKey = null;
+    let dragStartX = 0, dragStartY = 0;
+    let logoDragRotY = 0, logoDragRotYVel = 0;
+    const dragPlane = new THREE.Plane();
+    const dragStartPoint = new THREE.Vector3();
+    let clickTime = 0;
+
+    addEventListener("pointerdown", (e) => {
+      if (isActivating) return;
+
+      const ndcX = (e.clientX / innerWidth) * 2 - 1;
+      const ndcY = -(e.clientY / innerHeight) * 2 + 1;
+      raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+      const intersects = raycaster.intersectObject(group, true);
+
+      if (intersects.length > 0) {
+        let n = intersects[0].object; let key = null;
+        while (n) { if (nodeMap[n.name]) { key = nodeMap[n.name]; break; } n = n.parent; }
+        if (key) {
+          isDraggingPart = true;
+          draggedKey = key;
+          clickTime = Date.now();
+          Synth.playClick();
+          dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()), intersects[0].point);
+          raycaster.ray.intersectPlane(dragPlane, dragStartPoint);
+          document.body.style.cursor = 'grabbing';
+          return;
+        }
+      }
+
+      // If not intersecting, drag the whole scene (ONLY on desktop, to allow native mobile scrolling)
+      if (e.pointerType !== 'touch') {
+        isDraggingScene = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        document.body.style.cursor = 'grabbing';
+      }
+    });
+
+    // Prevent native mobile scrolling ONLY when interacting with a 3D component
+    addEventListener("touchmove", (e) => {
+      if (isDraggingPart) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    addEventListener("pointermove", (e) => {
+      // update pointer variables for parallax
+      pointerTX = (e.clientX / innerWidth - 0.5) * 2;
+      pointerTY = (e.clientY / innerHeight - 0.5) * 2;
+
+      if (isDraggingScene) {
+        logoDragRotY += (e.clientX - dragStartX) * 0.005;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+      } else if (isDraggingPart && draggedKey) {
+        // For individual part dragging, we need NDC coordinates
+        const ndcX = (e.clientX / innerWidth) * 2 - 1;
+        const ndcY = -(e.clientY / innerHeight) * 2 + 1;
+        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+        const intersectPoint = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(dragPlane, intersectPoint)) {
+          const rt = runtime[draggedKey];
+          const delta = intersectPoint.clone().sub(dragStartPoint);
+          rt.targetDragX = delta.x / group.scale.x;
+          rt.targetDragY = delta.y / group.scale.y;
+
+          if (isPuzzleActive) {
+            const currentOffset = PUZZLE_OFFSETS[draggedKey].clone().multiplyScalar(rt.ex).add(new THREE.Vector3(rt.targetDragX, rt.targetDragY, 0));
+            if (currentOffset.length() < 1.0) {
+              rt.isSnapped = true;
+              Synth.playClick();
+              rt.ex = 0; rt.targetDragX = 0; rt.targetDragY = 0;
+              rt.tiltX = 0; rt.tiltY = 0; rt.spin = 0;
+              isDraggingPart = false;
+              draggedKey = null;
+              document.body.style.cursor = 'default';
+
+              if (PARTKEYS.every(k => runtime[k].isSnapped)) {
+                isPuzzleActive = false;
+                document.body.classList.remove('puzzle-mode');
+                setTimeout(() => {
+                  Synth.playAwakening();
+                  introStart = clock.getElapsedTime();
+                }, 500);
+              }
+            }
+          }
+        }
+      }
+    });
+
+    addEventListener("pointerup", (e) => {
+      if (isDraggingPart && draggedKey) {
+        const rt = runtime[draggedKey];
+        const dragDuration = Date.now() - clickTime;
+        if (dragDuration < 250 && Math.abs(rt.dragX) < 0.2 && Math.abs(rt.dragY) < 0.2 && !isPuzzleActive) {
+          rt.spinVel += Math.PI * 12;
+        }
+      }
+      isDraggingScene = false;
+      isDraggingPart = false;
+      draggedKey = null;
+      document.body.style.cursor = isHovered && !isActivating ? 'pointer' : 'default';
+    });
+
+    const loaderEl = document.getElementById("loader");
+    const loaderBar = document.getElementById("loaderbar");
+    const loaderLbl = document.getElementById("loaderlbl");
+
+    let introStart = null;
+    let introDone = false;
+
+    new GLTFLoader().load("DA_5101.glb", (gltf) => {
+      const root = gltf.scene;
+
+      const fullBox = new THREE.Box3().setFromObject(root);
+      const fullCenter = fullBox.getCenter(new THREE.Vector3());
+      const fullSize = fullBox.getSize(new THREE.Vector3());
+      const scale = 3.4 / Math.max(fullSize.x, fullSize.y, 1e-6);
+      root.position.sub(fullCenter);
+      group.add(root);
+      group.userData.baseScale = scale;
+      group.scale.setScalar(scale * Math.min(1.0, innerWidth / 800));
+
+      root.traverse(obj => {
+        if (!obj.isMesh) return;
+        obj.material = obj.material.clone();
+        obj.material.envMapIntensity = 1.1;
+        obj.material.transparent = true;
+        obj.material.opacity = 0;
+        obj.castShadow = false; obj.receiveShadow = false;
+        let n = obj, key = null;
+        while (n) { if (nodeMap[n.name]) { key = nodeMap[n.name]; break; } n = n.parent; }
+        if (!key) return;
+        partsByKey[key] = partsByKey[key] || [];
+        partsByKey[key].push(obj);
+        obj.userData.basePos = obj.position.clone();
+        obj.userData.baseRot = obj.rotation.clone();
+        obj.userData.baseScale = obj.scale.clone();
+        if (!basePos[key]) basePos[key] = obj.position.clone();
+        if (!explodeDir[key]) {
+          const dirs = {
+            'frame': new THREE.Vector3(0, 0, 1),
+            'mid': new THREE.Vector3(0, 0, 1),
+            'p1': new THREE.Vector3(-1, 1.2, 0).normalize(),
+            'p2': new THREE.Vector3(1, 1.2, 0).normalize(),
+            'p3': new THREE.Vector3(1, -1.2, 0).normalize(),
+            'p4': new THREE.Vector3(-1, -1.2, 0).normalize(),
+          };
+          explodeDir[key] = dirs[key];
+        }
+        runtime[key].ex = EXPLODE_SCALE[key] * 1.6;
+        obj.scale.copy(obj.userData.baseScale).multiplyScalar(0.55);
+      });
+      onReady();
+    }, (xhr) => {
+      if (xhr.total) {
+        const pct = Math.min(100, Math.round(xhr.loaded / xhr.total * 100));
+        loaderBar.style.width = pct + "%";
+        loaderLbl.textContent = "Memuat model 3D… " + pct + "%";
+      }
+    });
+    function onReady() {
+      loaderBar.style.width = "100%";
+      loaderEl.style.opacity = '0';
+      setTimeout(() => {
+        loaderEl.style.display = 'none';
+        document.body.classList.add('show-blueprint');
+        isPuzzleActive = true;
+        animate();
+      }, 800);
+    }
+    const KF = [
+      { cam: { x: 0, y: 0, z: 6.4 }, rotY: 0.12, states: { frame: { op: 1, em: 0.25, ex: 0 }, mid: { op: 1, em: 0.55, ex: 0 }, p1: { op: 1, em: 0.3, ex: 0 }, p2: { op: 1, em: 0.3, ex: 0 }, p3: { op: 1, em: 0.3, ex: 0 }, p4: { op: 1, em: 0.3, ex: 0 } } },
+      { cam: { x: 0, y: 0, z: 6.0 }, rotY: 0.0, states: { frame: { op: 1, em: 0.25, ex: 0 }, mid: { op: 1, em: 0.55, ex: 0 }, p1: { op: 1, em: 0.3, ex: 0 }, p2: { op: 1, em: 0.3, ex: 0 }, p3: { op: 1, em: 0.3, ex: 0 }, p4: { op: 1, em: 0.3, ex: 0 } } },
+      { cam: { x: 1.1, y: 0.25, z: 4.6 }, rotY: -0.35, states: { frame: { op: 1, em: 0.9, ex: 0 }, mid: { op: 0.1, em: 0.15, ex: 0 }, p1: { op: 0.1, em: 0.15, ex: 0 }, p2: { op: 0.1, em: 0.15, ex: 0 }, p3: { op: 0.1, em: 0.15, ex: 0 }, p4: { op: 0.1, em: 0.15, ex: 0 } } },
+      { cam: { x: -0.9, y: -0.15, z: 3.3 }, rotY: 0.35, states: { frame: { op: 0.1, em: 0.15, ex: 0 }, mid: { op: 1, em: 1.4, ex: 0.18 }, p1: { op: 0.1, em: 0.15, ex: 0 }, p2: { op: 0.1, em: 0.15, ex: 0 }, p3: { op: 0.1, em: 0.15, ex: 0 }, p4: { op: 0.1, em: 0.15, ex: 0 } } },
+      { cam: { x: 0, y: 0.2, z: 4.1 }, rotY: 0.0, states: { frame: { op: 0.1, em: 0.15, ex: 0 }, mid: { op: 0.1, em: 0.15, ex: 0 }, p1: { op: 1, em: 1.1, ex: 0.12 }, p2: { op: 1, em: 1.1, ex: 0.12 }, p3: { op: 1, em: 1.1, ex: 0.12 }, p4: { op: 1, em: 1.1, ex: 0.12 } } },
+      { cam: { x: 0, y: 0, z: 7.4 }, rotY: 0.0, states: { frame: { op: 1, em: 0.35, ex: 0 }, mid: { op: 1, em: 0.7, ex: 0 }, p1: { op: 1, em: 0.4, ex: 0 }, p2: { op: 1, em: 0.4, ex: 0 }, p3: { op: 1, em: 0.4, ex: 0 }, p4: { op: 1, em: 0.4, ex: 0 } } },
+    ];
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function computeFrame(progress) {
+      const n = KF.length - 1;
+      const scaled = Math.min(Math.max(progress, 0), 1) * n;
+      let idx = Math.floor(scaled); if (idx >= n) idx = n - 1;
+      const t = scaled - idx;
+      const A = KF[idx], B = KF[idx + 1];
+      const cam = { x: lerp(A.cam.x, B.cam.x, t), y: lerp(A.cam.y, B.cam.y, t), z: lerp(A.cam.z, B.cam.z, t) };
+      const rotY = lerp(A.rotY, B.rotY, t);
+      const states = {};
+      for (const k of PARTKEYS) {
+        const sa = A.states[k], sb = B.states[k];
+        states[k] = { op: lerp(sa.op, sb.op, t), em: lerp(sa.em, sb.em, t), ex: lerp(sa.ex, sb.ex, t) };
+      }
+      return { cam, rotY, states };
+    }
+
+    function easeOutBack(x) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+
+    /* ---------------- scroll progress & revealing text ---------------- */
+    let targetProgress = 0, shownProgress = 0;
+    function updateProgress() {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      targetProgress = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+      document.body.classList.toggle("scrolled", scrollY > 40);
+    }
+    addEventListener("scroll", updateProgress, { passive: true });
+    updateProgress();
+
+    function prepareHTML(html) {
+      let out = '';
+      let isTag = false;
+      let tagStr = '';
+      for (let i = 0; i < html.length; i++) {
+        const char = html[i];
+        if (char === '<') isTag = true;
+        if (isTag) {
+          tagStr += char;
+          if (char === '>') {
+            isTag = false;
+            out += tagStr;
+            tagStr = '';
+          }
+        } else {
+          if (char.trim() === '') {
+            out += char;
+          } else {
+            out += `<span class="type-char" style="opacity:0; transition: opacity 0.05s;">${char}</span>`;
+          }
+        }
+      }
+      return out;
+    }
+
+    const steps = document.querySelectorAll(".step");
+    steps.forEach(s => {
+      const textEls = s.querySelectorAll('h1, h2, p:not(.eyebrow)');
+      textEls.forEach(t => {
+        t.innerHTML = prepareHTML(t.innerHTML);
+      });
+    });
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting && !e.target.classList.contains("in-view")) {
+          if (e.target.dataset.typed === "true") {
+            // already fully typed, just show panel smoothly
+            e.target.classList.add("in-view");
+            return;
+          }
+          e.target.classList.add("in-view");
+          const chars = e.target.querySelectorAll('.type-char');
+          let i = 0;
+          function reveal() {
+            if (!e.target.classList.contains("in-view")) return;
+            if (i >= chars.length) {
+              e.target.dataset.typed = "true";
+              return;
+            }
+            chars[i].style.opacity = '1';
+            if (i % 2 === 0) Synth.playTypewriter();
+            i++;
+            setTimeout(reveal, 10 + Math.random() * 15);
+          }
+          setTimeout(reveal, 200);
+        } else if (!e.isIntersecting && e.target.classList.contains("in-view")) {
+          if (e.target.dataset.typed !== "true") {
+            e.target.classList.remove("in-view");
+            const chars = e.target.querySelectorAll('.type-char');
+            chars.forEach(c => c.style.opacity = '0');
+          }
+        }
+      });
+    }, { threshold: 0.32 });
+    steps.forEach(s => io.observe(s));
+
+    let pointerX = 0, pointerY = 0;
+    const PARALLAX_AMP = reduceMotion ? 0 : 0.12; // Reduced to prevent component collision
+    const progressFill = document.getElementById("progressFill");
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.getElapsedTime();
+      shownProgress = lerp(shownProgress, targetProgress, Math.min(1, dt * 4.2));
+      progressFill.style.height = (shownProgress * 100).toFixed(1) + "%";
+      const kfFrame = computeFrame(shownProgress);
+      pointerX = lerp(pointerX, pointerTX, Math.min(1, dt * 3));
+      pointerY = lerp(pointerY, pointerTY, Math.min(1, dt * 3));
+
+      const introElapsed = introStart !== null ? elapsed - introStart : -1;
+      if (!introDone && introStart !== null) {
+        if (PARTKEYS.every(k => introElapsed > PART_CONFIG[k].delay + PART_CONFIG[k].duration + 0.15)) introDone = true;
+      }
+
+      let shockwaveForce = 0;
+      if (!isActivating && introElapsed > 2.4 && introElapsed < 4.5) {
+        const shockP = (introElapsed - 2.4) / 2.1;
+        shockwaveForce = Math.max(0, Math.sin(shockP * Math.PI) * 50.0 * Math.exp(-shockP * 7));
+      }
+
+      if (!isDraggingScene) {
+        logoDragRotYVel += (0 - logoDragRotY) * 60 * dt;
+        logoDragRotYVel *= Math.exp(-8 * dt);
+        logoDragRotY += logoDragRotYVel * dt;
+      }
+
+      let targetGroupScale = 1.0;
+      let awakeSpin = 0;
+      let explodeForce = 0;
+      if (isPuzzleActive) {
+        targetGroupScale = 0.45;
+      } else if (!introDone && introStart !== null) {
+        const awakeP = Math.min(1, Math.max(0, (elapsed - introStart) / 1.5));
+        targetGroupScale = 0.45 + (1.0 - 0.45) * easeOutBack(awakeP);
+
+        const spinP = Math.min(1, Math.max(0, (elapsed - introStart) / 2.0));
+        awakeSpin = (1.0 - easeOutBack(spinP)) * Math.PI * 4;
+        explodeForce = Math.sin(spinP * Math.PI) * 1.5;
+      }
+      group.scale.setScalar(lerp(group.scale.x, targetGroupScale, Math.min(1, dt * 5)));
+
+      if (!isPuzzleActive) {
+        group.rotation.y = kfFrame.rotY + logoDragRotY + awakeSpin;
+        group.rotation.x = pointerY * 0.05;
+      } else {
+        group.rotation.y = logoDragRotY;
+        group.rotation.x = 0;
+      }
+
+      const posAttr = particles.geometry.attributes.position;
+      let suckForce = 0;
+      if (!introDone && introStart !== null && introElapsed > 0 && introElapsed < 2.4) {
+        const suckP = introElapsed / 2.4;
+        suckForce = Math.pow(suckP, 2) * 18.0;
+      }
+
+      for (let i = 0; i < partCount * 3; i += 3) {
+        const x = posAttr.array[i], y = posAttr.array[i + 1], z = posAttr.array[i + 2];
+        const dist = Math.sqrt(x * x + y * y + z * z) + 0.001;
+
+        if (suckForce > 0) {
+          // Implode with a vortex swirl
+          posAttr.array[i] -= ((x / dist) * suckForce + z * suckForce * 0.8) * dt;
+          posAttr.array[i + 1] -= (y / dist) * suckForce * dt;
+          posAttr.array[i + 2] -= ((z / dist) * suckForce - x * suckForce * 0.8) * dt;
+        } else {
+          // Normal upward drift
+          posAttr.array[i + 1] += dt * 0.3;
+          if (posAttr.array[i + 1] > 10) {
+            posAttr.array[i + 1] = -10;
+            posAttr.array[i] = (Math.random() - 0.5) * 20;
+            posAttr.array[i + 2] = (Math.random() - 0.5) * 20;
+          }
+        }
+
+        if (shockwaveForce > 0) {
+          posAttr.array[i] += (x / dist) * shockwaveForce * dt;
+          posAttr.array[i + 1] += (y / dist) * shockwaveForce * dt;
+          posAttr.array[i + 2] += (z / dist) * shockwaveForce * dt;
+        }
+      }
+
+      if (shockwaveForce > 0) {
+        partMat.color.setHex(0xffaa55).lerp(new THREE.Color(0xffffff), shockwaveForce / 50.0);
+        partMat.size = 0.04 + (shockwaveForce / 50.0) * 0.15;
+      } else if (!introDone && introStart !== null && introElapsed > 0 && introElapsed < 2.4) {
+        partMat.color.setHex(0xff3300);
+        partMat.size = 0.06;
+      } else {
+        partMat.color.setHex(0xffaa55);
+        partMat.size = 0.04;
+      }
+
+      posAttr.needsUpdate = true;
+      particles.rotation.y = elapsed * 0.05;
+
+      if (isActivating) {
+        activationElapsed += dt;
+        camera.position.set(pointerX * 0.16, -pointerY * 0.10, 5.5 - Math.min(activationElapsed * 0.2, 0.5));
+        camera.lookAt(0, 0, 0);
+        group.rotation.y = elapsed * 0.2;
+      } else if (isPuzzleActive) {
+        camera.position.set(kfFrame.cam.x, kfFrame.cam.y, kfFrame.cam.z);
+        camera.lookAt(0, 0, 0);
+      } else {
+        camera.position.set(kfFrame.cam.x + pointerX * 0.16, kfFrame.cam.y - pointerY * 0.10, kfFrame.cam.z);
+        camera.lookAt(0, 0, 0);
+      }
+
+      for (const key of PARTKEYS) {
+        const meshes = partsByKey[key];
+        if (!meshes) continue;
+        const rt = runtime[key], cfg = PART_CONFIG[key];
+        let targetEx, targetOp, targetEm;
+
+        if (isActivating) {
+          targetEx = 0; targetOp = 1; targetEm = key === 'mid' ? (1.0 + Math.max(0, Math.sin(activationElapsed * 6) * 1.5)) : 0.5;
+        } else if (isPuzzleActive) {
+          if (rt.isSnapped) {
+            targetEx = 0; targetOp = 1; targetEm = 0.8;
+          } else {
+            targetEx = 1.0;
+            targetOp = 0.8; targetEm = 0.1;
+          }
+        } else if (!introDone && introStart !== null) {
+          const p = Math.min(1, Math.max(0, (elapsed - introStart - cfg.delay) / cfg.duration));
+          targetEx = EXPLODE_SCALE[key] * explodeForce;
+          targetOp = 1;
+          targetEm = kfFrame.states[key].em + (explodeForce * 0.5);
+        } else {
+          targetEx = kfFrame.states[key].ex * EXPLODE_SCALE[key]; targetOp = kfFrame.states[key].op;
+          targetEm = kfFrame.states[key].em;
+        }
+
+        rt.exVel += (targetEx - rt.ex) * 90 * dt; rt.exVel *= Math.exp(-11 * dt); rt.ex += rt.exVel * dt;
+        rt.op = lerp(rt.op, targetOp, Math.min(1, dt * 6));
+
+        if (isDraggingPart && draggedKey === key) {
+          rt.dragX = lerp(rt.dragX, rt.targetDragX, Math.min(1, dt * 15));
+          rt.dragY = lerp(rt.dragY, rt.targetDragY, Math.min(1, dt * 15));
+        } else {
+          rt.dragVelX += (0 - rt.dragX) * 120 * dt; rt.dragVelX *= Math.exp(-12 * dt); rt.dragX += rt.dragVelX * dt;
+          rt.dragVelY += (0 - rt.dragY) * 120 * dt; rt.dragVelY *= Math.exp(-12 * dt); rt.dragY += rt.dragVelY * dt;
+        }
+
+        const targetSpin = Math.round(rt.spin / (Math.PI * 2)) * Math.PI * 2;
+        if (introDone) {
+          rt.spinVel += (targetSpin - rt.spin) * 60 * dt; rt.spinVel *= Math.exp(-8 * dt); rt.spin += rt.spinVel * dt;
+        } else if (!isPuzzleActive) {
+          // Snap to 0 gently if awakening
+          rt.spin = lerp(rt.spin, 0, dt * 10);
+        }
+
+        const dragOffsetVec = new THREE.Vector3(rt.dragX, rt.dragY, 0);
+        let offset;
+
+        if (isPuzzleActive) {
+          offset = PUZZLE_OFFSETS[key].clone().multiplyScalar(rt.ex).add(dragOffsetVec);
+        } else {
+          const dir = explodeDir[key];
+          offset = dir.clone().multiplyScalar(rt.ex + (reduceMotion || isActivating ? 0 : Math.sin(elapsed * 0.55 + rt.phase) * 0.02)).add(dragOffsetVec);
+        }
+
+        if (introDone) {
+          rt.tiltX = lerp(rt.tiltX, pointerY * cfg.tilt, Math.min(1, dt * lerp(2.0, 4.2, cfg.depth)));
+          rt.tiltY = lerp(rt.tiltY, -pointerX * cfg.tilt, Math.min(1, dt * lerp(2.0, 4.2, cfg.depth)));
+        } else if (!isPuzzleActive) {
+          // Keep at 0 for awakening
+          rt.tiltX = lerp(rt.tiltX, 0, dt * 10);
+          rt.tiltY = lerp(rt.tiltY, 0, dt * 10);
+        }
+        rt.currentScale = lerp(rt.currentScale, !introDone ? 1 : 1, Math.min(1, dt * 6));
+
+        for (const m of meshes) {
+          m.position.copy(m.userData.basePos).add(offset).add(new THREE.Vector3(pointerX * cfg.depth * PARALLAX_AMP, -pointerY * cfg.depth * PARALLAX_AMP, 0));
+          m.rotation.copy(m.userData.baseRot); m.rotation.x += rt.tiltX; m.rotation.y += rt.tiltY + rt.spin;
+          m.scale.copy(m.userData.baseScale).multiplyScalar(rt.currentScale);
+          if (m.material) {
+            m.material.transparent = rt.op < 0.999;
+            m.material.opacity = rt.op;
+            if (!m.material.emissive) m.material.emissive = new THREE.Color(0x000000);
+
+            // Only apply glow to the orange parts (diamond, petals). Frame stays natural black.
+            const glow = (key === 'frame') ? 0 : (targetEm * 0.55);
+            m.material.emissive.setRGB(1, 0.24, 0.06).multiplyScalar(glow);
+          }
+        }
+      }
+      renderer.render(scene, camera);
+    }
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+      if (group.userData.baseScale) {
+        group.scale.setScalar(group.userData.baseScale * Math.min(1.0, innerWidth / 800));
+      }
+    });
+  </script>
+
+
+    <script>
+      document.getElementById('enter-guidebook-btn')?.addEventListener('click', () => {
+          // Play click sound if possible
+          if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playClick();
+          
+          // Animate out
+          document.body.style.transition = 'opacity 1s ease';
+          document.body.style.opacity = '0';
+          
+          setTimeout(() => {
+              window.parent.postMessage('FINISH_INTRO', '*');
+          }, 1000);
+      });
+    </script>
+
+</body>
+
+</html>
