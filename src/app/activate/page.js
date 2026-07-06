@@ -12,7 +12,7 @@ import { use3DStore } from '@/store/use3DStore';
 import Hero3DModel from '@/components/ui/Hero3DModel';
 
 export default function ActivatePage() {
-  const [code, setCode] = useState(['', '', '']);
+  const [code, setCode] = useState(['DA', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
