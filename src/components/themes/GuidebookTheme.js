@@ -1,0 +1,68 @@
+import { useState, useRef, useEffect } from "react";
+import { useInView } from "framer-motion";
+import LoadingScreen from "@/components/guidebook/LoadingScreen";
+import Navbar from "@/components/guidebook/Navbar";
+import Hero from "@/components/guidebook/Hero";
+import About from "@/components/guidebook/About";
+import Categories from "@/components/guidebook/Categories";
+import Performances from "@/components/guidebook/Performances";
+import RundownSequence from "@/components/guidebook/RundownSequence";
+import Timeline from "@/components/guidebook/Timeline";
+import Judges from "@/components/guidebook/Judges";
+import Sponsors from "@/components/guidebook/Sponsors";
+import { Ticker, Footer } from "@/components/guidebook/Footer";
+import Hero3DModel from "@/components/ui/Hero3DModel";
+import { use3DStore } from "@/store/use3DStore";
+
+function SectionWatcher({ name, children }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { margin: "-40% 0px -40% 0px" });
+  const setSection = use3DStore((state) => state.setCurrentSection);
+
+  useEffect(() => {
+    if (inView && name !== 'philosophy') {
+      setSection(name);
+    }
+  }, [inView, name, setSection]);
+
+  return <div ref={ref}>{children}</div>;
+}
+
+export default function GuidebookTheme({
+  user, isActivated, settings, logoSrc, visibleFeatures, handleCTA, router
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "transparent", color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif", position: "relative" }}>
+      {/* 3D Background */}
+      {loaded && <Hero3DModel />}
+      
+      <LoadingScreen onDone={() => setLoaded(true)} />
+      {loaded && (
+        <div style={{ position: "relative", zIndex: 10 }}>
+          <Navbar />
+          
+          <SectionWatcher name="hero"><Hero /></SectionWatcher>
+          <Ticker />
+          
+          <SectionWatcher name="about"><About /></SectionWatcher>
+          
+          <SectionWatcher name="categories"><Categories /></SectionWatcher>
+          <SectionWatcher name="performances"><Performances /></SectionWatcher>
+          <Ticker />
+          
+          <SectionWatcher name="judges">
+             <RundownSequence />
+             <Timeline />
+             <Judges />
+          </SectionWatcher>
+          
+          <SectionWatcher name="sponsors"><Sponsors /></SectionWatcher>
+          
+          <SectionWatcher name="footer"><Footer /></SectionWatcher>
+        </div>
+      )}
+    </div>
+  );
+}

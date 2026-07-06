@@ -88,16 +88,23 @@ function generateUniqueCode() {
 export async function getActivationCodes(statusFilter) {
   let q;
   if (statusFilter && statusFilter !== 'all') {
-    q = query(
-      collection(db, 'activation_codes'),
-      where('status', '==', statusFilter),
-      orderBy('createdAt', 'desc')
-    );
+    q = query(collection(db, 'activation_codes'), where('status', '==', statusFilter));
   } else {
-    q = query(collection(db, 'activation_codes'), orderBy('createdAt', 'desc'));
+    q = query(collection(db, 'activation_codes'));
   }
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0));
+}
+
+export async function deleteActivationCode(codeId) {
+  return deleteDoc(doc(db, 'activation_codes', codeId));
+}
+
+export async function checkIfUserExists(uid) {
+  if (!uid) return false;
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  return userSnap.exists();
 }
 
 // =====================
@@ -107,16 +114,13 @@ export async function getActivationCodes(statusFilter) {
 export async function getVideos(category) {
   let q;
   if (category && category !== 'all') {
-    q = query(
-      collection(db, 'videos'),
-      where('category', '==', category),
-      orderBy('order', 'asc')
-    );
+    q = query(collection(db, 'videos'), where('category', '==', category));
   } else {
-    q = query(collection(db, 'videos'), orderBy('order', 'asc'));
+    q = query(collection(db, 'videos'));
   }
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 export async function addVideo(data) {
@@ -141,16 +145,13 @@ export async function deleteVideo(id) {
 export async function getPhotos(category) {
   let q;
   if (category && category !== 'all') {
-    q = query(
-      collection(db, 'photos'),
-      where('category', '==', category),
-      orderBy('createdAt', 'desc')
-    );
+    q = query(collection(db, 'photos'), where('category', '==', category));
   } else {
-    q = query(collection(db, 'photos'), orderBy('createdAt', 'desc'));
+    q = query(collection(db, 'photos'));
   }
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0));
 }
 
 export async function addPhoto(data) {
@@ -267,4 +268,8 @@ export async function getUsers() {
   const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function deleteUser(id) {
+  return deleteDoc(doc(db, 'users', id));
 }
