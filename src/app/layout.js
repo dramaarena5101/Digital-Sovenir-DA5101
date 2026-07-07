@@ -10,16 +10,45 @@ const inter = Inter({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-export const metadata = {
-  title: "Drama Arena 5101 — Digital Souvenir",
-  description: "Koleksi Digital Eksklusif Pentas Seni Drama Arena 5101. Video penampilan, galeri foto, komik digital, soundtrack, dan konten bonus eksklusif.",
-  keywords: "Drama Arena 5101, Pentas Seni, Digital Souvenir, Koleksi Digital, Darussalam",
-  openGraph: {
-    title: "Drama Arena 5101 — Digital Souvenir",
-    description: "Koleksi Digital Eksklusif Pentas Seni Drama Arena 5101",
-    type: "website",
-  },
-};
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { getDirectImageUrl } from "@/lib/utils";
+
+export async function generateMetadata() {
+  let settings = {};
+  try {
+    const docSnap = await getDoc(doc(db, "settings", "general"));
+    if (docSnap.exists()) {
+      settings = docSnap.data();
+    }
+  } catch (e) {
+    console.error("Error fetching settings for metadata:", e);
+  }
+
+  const title = "Drama Arena 5101 — Digital Souvenir";
+  const description = "Koleksi Digital Eksklusif Pentas Seni Drama Arena 5101. Video penampilan, galeri foto, komik digital, soundtrack, dan konten bonus eksklusif.";
+  const iconUrl = settings.faviconUrl ? getDirectImageUrl(settings.faviconUrl) : "/favicon.ico";
+  const ogImageUrl = settings.heroImageUrl 
+    ? getDirectImageUrl(settings.heroImageUrl) 
+    : (settings.logoUrl ? getDirectImageUrl(settings.logoUrl) : null);
+
+  return {
+    title,
+    description,
+    keywords: "Drama Arena 5101, Pentas Seni, Digital Souvenir, Koleksi Digital, Darussalam",
+    icons: {
+      icon: iconUrl,
+      shortcut: iconUrl,
+      apple: iconUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: ogImageUrl ? [{ url: ogImageUrl }] : [],
+    },
+  };
+}
 
 export default function RootLayout({ children }) {
   return (
