@@ -198,7 +198,7 @@ export default function AdminLayout({ children }) {
         </AnimatePresence>
 
         {/* Main */}
-        <main className="admin-main" style={{ flex: 1, marginLeft: 250, minHeight: '100vh' }}>
+        <main className="admin-main" style={{ flex: 1, minWidth: 0, marginLeft: 250, minHeight: '100vh' }}>
           <div style={{ padding: 'var(--space-xl)' }}>
             {children}
           </div>
