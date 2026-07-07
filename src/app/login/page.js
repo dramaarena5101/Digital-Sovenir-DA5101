@@ -145,7 +145,7 @@ export default function LoginPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           style={{ width: '100%', maxWidth: 400 }}
         >
-          <h2 className="display-sm" style={{ marginBottom: 8 }}>
+          <h2 className="display-sm" style={{ marginBottom: 8, fontFamily: 'var(--font-bebas)', letterSpacing: '0.05em', fontSize: '2.5rem' }}>
             {mode === 'login' ? 'Selamat Datang' : 'Buat Akun'}
           </h2>
           <p className="body-md" style={{ color: 'var(--muted)', marginBottom: 32 }}>

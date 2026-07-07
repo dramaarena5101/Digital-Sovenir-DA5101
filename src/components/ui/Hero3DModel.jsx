@@ -397,7 +397,7 @@ export default function Hero3DModel({ forceVisible, scatterIdle, inline, animate
   const isVisible = forceVisible || introCompleted || animateOnMount;
 
   return (
-    <div style={inline ? { width: '100%', height: '100%', position: 'relative' } : { position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+    <div style={inline ? { width: '100%', height: '100%', position: 'relative', pointerEvents: 'none', touchAction: 'auto' } : { position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
       {/* Optional: Intro Overlay Fade */}
       {!isVisible && (
          <div style={{ position: 'absolute', inset: 0, background: '#fff', zIndex: 10, pointerEvents: 'none', transition: 'opacity 2s', opacity: isVisible ? 0 : 1 }} />
@@ -408,6 +408,7 @@ export default function Hero3DModel({ forceVisible, scatterIdle, inline, animate
         shadows={!inline}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 2]}
+        style={{ touchAction: 'auto' }}
       >
         <MouseCameraParallax inline={inline} />
         
