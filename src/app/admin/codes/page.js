@@ -5,7 +5,7 @@ import { generateCodes, getActivationCodes, deleteActivationCode, checkIfUserExi
 import { formatDateTime } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Key, Plus, Download, Search, CheckCircle, XCircle, Copy, Check, Trash2 } from 'lucide-react';
-import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useDialog } from '@/contexts/DialogContext';
 import * as XLSX from 'xlsx';
 
 const fadeUp = {
@@ -17,6 +17,7 @@ const fadeUp = {
 };
 
 export default function AdminCodesPage() {
+  const { showToast, showDialog } = useDialog();
   const [codes, setCodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -27,8 +28,6 @@ export default function AdminCodesPage() {
   const [showGenForm, setShowGenForm] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
   const [newlyGenerated, setNewlyGenerated] = useState([]);
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, code: null });
-  const [alertModal, setAlertModal] = useState({ isOpen: false, title: '', message: '' });
 
   useEffect(() => {
     loadCodes();
@@ -38,24 +37,26 @@ export default function AdminCodesPage() {
     if (code.status === 'used' && code.usedBy) {
       const exists = await checkIfUserExists(code.usedBy);
       if (exists) {
-        setAlertModal({ isOpen: true, title: 'Perhatian', message: 'Kode ini sedang dipakai oleh pengguna yang masih aktif. Hapus pengguna terlebih dahulu.' });
+        showDialog({ title: 'Perhatian', message: 'Kode ini sedang dipakai oleh pengguna yang masih aktif. Hapus pengguna terlebih dahulu.' });
         return;
       }
     }
-    setDeleteModal({ isOpen: true, code });
-  };
-
-  const executeDeleteCode = async () => {
-    const code = deleteModal.code;
-    if (!code) return;
-    try {
-      await deleteActivationCode(code.id);
-      setCodes(codes.filter(c => c.id !== code.id));
-      setDeleteModal({ isOpen: false, code: null });
-    } catch (e) {
-      console.error(e);
-      setAlertModal({ isOpen: true, title: 'Gagal', message: 'Gagal menghapus kode.' });
-    }
+    
+    showDialog({
+      title: 'Hapus Kode Aktivasi',
+      message: `Yakin ingin menghapus kode ${code.code}? Data tidak dapat dikembalikan.`,
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await deleteActivationCode(code.id);
+          setCodes(codes.filter(c => c.id !== code.id));
+          showToast('Kode berhasil dihapus', 'success');
+        } catch (e) {
+          console.error(e);
+          showToast('Gagal menghapus kode', 'error');
+        }
+      }
+    });
   };
 
   const loadCodes = async () => {
@@ -79,9 +80,10 @@ export default function AdminCodesPage() {
       setGenCount(10);
       setBatchName('');
       await loadCodes();
+      showToast('Berhasil generate kode', 'success');
     } catch (error) {
       console.error('Error generating codes:', error);
-      alert('Gagal generate kode. Silakan coba lagi.');
+      showToast('Gagal generate kode. Silakan coba lagi.', 'error');
     }
     setGenerating(false);
   };
@@ -354,26 +356,6 @@ export default function AdminCodesPage() {
           )}
         </div>
       </motion.div>
-
-      <ConfirmModal
-        isOpen={deleteModal.isOpen}
-        title="Hapus Kode Aktivasi"
-        message={`Yakin ingin menghapus kode ${deleteModal.code?.code}? Data tidak dapat dikembalikan.`}
-        confirmText="Ya, Hapus"
-        cancelText="Batal"
-        onConfirm={executeDeleteCode}
-        onCancel={() => setDeleteModal({ isOpen: false, code: null })}
-      />
-
-      <ConfirmModal
-        isOpen={alertModal.isOpen}
-        title={alertModal.title}
-        message={alertModal.message}
-        confirmText="OK"
-        hideCancel={true}
-        onConfirm={() => setAlertModal({ isOpen: false, title: '', message: '' })}
-        onCancel={() => setAlertModal({ isOpen: false, title: '', message: '' })}
-      />
     </motion.div>
   );
 }

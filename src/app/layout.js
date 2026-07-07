@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { DialogProvider } from "@/contexts/DialogContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,7 +33,9 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col" style={{ fontFamily: 'var(--font-body)' }}>
         <SettingsProvider>
           <AuthProvider>
-            {children}
+            <DialogProvider>
+              {children}
+            </DialogProvider>
           </AuthProvider>
         </SettingsProvider>
       </body>

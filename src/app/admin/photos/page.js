@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { getPhotos, addPhoto, deletePhoto } from '@/lib/firestore';
 import { uploadImage } from '@/lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Plus, Trash2, X, Upload, Image as ImageIcon, Search } from 'lucide-react';
+import { Image as ImageIcon, Plus, Trash2, X, Upload, Save, Search, AlertTriangle } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useDialog } from '@/contexts/DialogContext';
 
 export default function AdminPhotosPage() {
   const { settings } = useSettings();
+  const { showToast, showDialog } = useDialog();
   const photoCategories = settings?.photoCategories || [];
   const allCategories = [{ value: 'all', label: 'Semua' }, ...photoCategories];
 
@@ -54,7 +56,7 @@ export default function AdminPhotosPage() {
           if (folderMatch) {
             // It's a folder link
             if (!settings?.googleDriveApiKey) {
-              alert("API Key Google Drive belum diatur di menu Settings! Sistem tidak bisa membaca isi folder.");
+              showToast("API Key Google Drive belum diatur di menu Settings!", 'error');
               continue;
             }
             const folderId = folderMatch[1];
@@ -62,12 +64,12 @@ export default function AdminPhotosPage() {
               const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${settings.googleDriveApiKey}&fields=files(id,name,thumbnailLink)&pageSize=100`);
               const data = await response.json();
               if (data.error) {
-                 alert("Gagal membaca folder: " + data.error.message);
+                 showToast("Gagal membaca folder: " + data.error.message, 'error');
                  continue;
               }
               const driveFiles = data.files || [];
               if (driveFiles.length === 0) {
-                 alert("Folder kosong atau tidak berisi file gambar.");
+                 showToast("Folder kosong atau tidak berisi gambar.", 'error');
                  continue;
               }
               totalFilesToProcess += driveFiles.length - 1; // Adjust total length
@@ -76,17 +78,14 @@ export default function AdminPhotosPage() {
                 processedCount++;
                 setUploadProgress(Math.min(100, Math.round((processedCount / totalFilesToProcess) * 100)));
                 
-                // Gunakan CDN Google (lh3.googleusercontent.com) yang lebih tahan banting terhadap rate-limit
+                // Gunakan endpoint thumbnail dinamis (tidak akan expired seperti thumbnailLink API)
                 let thumbUrl = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
-                if (file.thumbnailLink) {
-                  thumbUrl = file.thumbnailLink.replace(/=s\d+/, '=s1200');
-                }
                 
                 await addPhoto({ title: file.name.split('.')[0] || 'Foto', imageUrl: thumbUrl, category });
               }
             } catch(err) {
               console.error(err);
-              alert("Terjadi kesalahan saat menghubungi Google Drive API.");
+              showToast("Gagal menghubungi Google Drive API.", 'error');
             }
           } else {
             // Regular link
@@ -99,31 +98,45 @@ export default function AdminPhotosPage() {
             await addPhoto({ title: `Foto_${Date.now()}_${i}`, imageUrl, category });
           }
         }
-            setShowForm(false); setUrlInput('');
+        setShowForm(false); setUrlInput('');
         await loadPhotos();
-    } catch (err) { console.error(err); alert('Gagal memproses foto.'); }
+        showToast('Foto berhasil diproses', 'success');
+    } catch (err) { console.error(err); showToast('Gagal memproses foto', 'error'); }
     setUploading(false);
     setUploadProgress(0);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus foto ini?')) return;
-    try { await deletePhoto(id); await loadPhotos(); } catch (e) { console.error(e); }
+    showDialog({
+      title: 'Hapus Foto',
+      message: 'Apakah Anda yakin ingin menghapus foto ini?',
+      isDanger: true,
+      onConfirm: async () => {
+        try { await deletePhoto(id); await loadPhotos(); showToast('Foto dihapus', 'success'); } catch (e) { console.error(e); showToast('Gagal menghapus', 'error'); }
+      }
+    });
   };
 
   const handleDeleteAll = async () => {
-    if (!confirm('AWAS! Anda yakin ingin menghapus SEMUA FOTO yang sedang tampil ini? Tindakan ini tidak bisa dibatalkan.')) return;
-    setLoading(true);
-    try {
-      for (const photo of filteredPhotos) {
-        await deletePhoto(photo.id);
+    showDialog({
+      title: 'Hapus Semua Foto',
+      message: 'AWAS! Anda yakin ingin menghapus SEMUA FOTO yang sedang tampil ini? Tindakan ini tidak bisa dibatalkan.',
+      isDanger: true,
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          for (const photo of filteredPhotos) {
+            await deletePhoto(photo.id);
+          }
+          await loadPhotos();
+          showToast('Semua foto berhasil dihapus', 'success');
+        } catch(e) {
+          console.error(e);
+          showToast('Gagal menghapus beberapa foto', 'error');
+        }
+        setLoading(false);
       }
-      await loadPhotos();
-    } catch(e) {
-      console.error(e);
-      alert('Gagal menghapus beberapa foto.');
-    }
-    setLoading(false);
+    });
   };
 
   const filteredPhotos = photos.filter(photo => 

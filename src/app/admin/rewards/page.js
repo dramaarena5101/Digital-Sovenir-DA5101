@@ -6,8 +6,10 @@ import { uploadBadge } from '@/lib/storage';
 import { REWARD_TYPES } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, Plus, Edit, Trash2, X, Save, Upload } from 'lucide-react';
+import { useDialog } from '@/contexts/DialogContext';
 
 export default function AdminRewardsPage() {
+  const { showToast, showDialog } = useDialog();
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -36,13 +38,20 @@ export default function AdminRewardsPage() {
       if (editingReward) { await updateReward(editingReward.id, data); }
       else { await addReward(data); }
       setShowForm(false); await loadRewards();
-    } catch (err) { console.error(err); alert('Gagal menyimpan.'); }
+      showToast('Reward berhasil disimpan', 'success');
+    } catch (err) { console.error(err); showToast('Gagal menyimpan reward', 'error'); }
     setSaving(false);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus reward ini?')) return;
-    try { await deleteReward(id); await loadRewards(); } catch (e) { console.error(e); }
+    showDialog({
+      title: 'Hapus Reward',
+      message: 'Apakah Anda yakin ingin menghapus reward ini?',
+      isDanger: true,
+      onConfirm: async () => {
+        try { await deleteReward(id); await loadRewards(); showToast('Reward dihapus', 'success'); } catch (e) { console.error(e); showToast('Gagal menghapus reward', 'error'); }
+      }
+    });
   };
 
   const getRewardIcon = (type) => REWARD_TYPES.find(r => r.value === type)?.icon || '🏅';

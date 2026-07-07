@@ -5,8 +5,10 @@ import { getAudios, addAudio, deleteAudio } from '@/lib/firestore';
 import { uploadAudioFile } from '@/lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Plus, Trash2, X, Upload, Save } from 'lucide-react';
+import { useDialog } from '@/contexts/DialogContext';
 
 export default function AdminAudioPage() {
+  const { showToast, showDialog } = useDialog();
   const [audios, setAudios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -29,13 +31,20 @@ export default function AdminAudioPage() {
       await addAudio({ ...form, audioUrl });
       setShowForm(false); setForm({ title: '', artist: '', order: audios.length }); setUrlInput('');
       await loadAudios();
-    } catch (err) { console.error(err); alert('Gagal upload.'); }
+      showToast('Audio berhasil disimpan', 'success');
+    } catch (err) { console.error(err); showToast('Gagal menyimpan', 'error'); }
     setSaving(false);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus audio ini?')) return;
-    try { await deleteAudio(id); await loadAudios(); } catch (e) { console.error(e); }
+    showDialog({
+      title: 'Hapus Audio',
+      message: 'Apakah Anda yakin ingin menghapus audio ini?',
+      isDanger: true,
+      onConfirm: async () => {
+        try { await deleteAudio(id); await loadAudios(); showToast('Audio dihapus', 'success'); } catch (e) { console.error(e); showToast('Gagal menghapus', 'error'); }
+      }
+    });
   };
 
   return (

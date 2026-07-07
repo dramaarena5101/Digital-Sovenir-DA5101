@@ -5,8 +5,10 @@ import { getDocuments, addDocument, deleteDocument } from '@/lib/firestore';
 import { uploadPDF } from '@/lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Plus, Trash2, X, Upload, Save, ExternalLink } from 'lucide-react';
+import { useDialog } from '@/contexts/DialogContext';
 
 export default function AdminDocumentsPage() {
+  const { showToast, showDialog } = useDialog();
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -29,13 +31,20 @@ export default function AdminDocumentsPage() {
       await addDocument({ ...form, pdfUrl });
       setShowForm(false); setForm({ title: '', description: '', type: 'comic' }); setUrlInput('');
       await loadDocs();
-    } catch (err) { console.error(err); alert('Gagal upload.'); }
+      showToast('Dokumen berhasil diupload', 'success');
+    } catch (err) { console.error(err); showToast('Gagal upload', 'error'); }
     setSaving(false);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus dokumen ini?')) return;
-    try { await deleteDocument(id); await loadDocs(); } catch (e) { console.error(e); }
+    showDialog({
+      title: 'Hapus Dokumen',
+      message: 'Apakah Anda yakin ingin menghapus dokumen ini?',
+      isDanger: true,
+      onConfirm: async () => {
+        try { await deleteDocument(id); await loadDocs(); showToast('Dokumen dihapus', 'success'); } catch (e) { console.error(e); showToast('Gagal menghapus', 'error'); }
+      }
+    });
   };
 
   return (
