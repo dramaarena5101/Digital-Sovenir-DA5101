@@ -50,43 +50,49 @@ export default function DashboardLayout({ children }) {
   const LogoBlock = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {logoSrc ? (
-        <img src={getDirectImageUrl(logoSrc)} alt="Logo" style={{ height: 36, objectFit: 'contain' }} />
+        <img 
+          src={getDirectImageUrl(logoSrc)} 
+          alt="" 
+          style={{ height: 36, objectFit: 'contain' }} 
+          onError={(e) => e.currentTarget.style.display = 'none'}
+        />
       ) : (
-        <>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--primary)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Star size={18} color="var(--on-primary)" fill="var(--on-primary)" />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--ink)' }}>Drama Arena</span>
-          </div>
-        </>
+        <div style={{
+          width: 36, height: 36, borderRadius: 'var(--radius-md)',
+          backgroundColor: 'var(--primary)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Star size={18} color="var(--on-primary)" fill="var(--on-primary)" />
+        </div>
       )}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--ink)' }}>Drama Arena 5101</span>
+      </div>
     </div>
   );
 
   const LogoBlockDark = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {logoSrc ? (
-        <img src={getDirectImageUrl(logoSrc)} alt="Logo" style={{ height: 36, objectFit: 'contain' }} />
+        <img 
+          src={getDirectImageUrl(logoSrc)} 
+          alt="" 
+          style={{ height: 36, objectFit: 'contain' }} 
+          onError={(e) => e.currentTarget.style.display = 'none'}
+        />
       ) : (
-        <>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--primary)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Star size={18} color="var(--on-primary)" fill="var(--on-primary)" />
-          </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--on-dark)', letterSpacing: '-0.3px' }}>Drama Arena</div>
-            <div style={{ fontSize: 11, color: 'var(--on-dark-soft)', letterSpacing: 1 }}>DIGITAL SOUVENIR</div>
-          </div>
-        </>
+        <div style={{
+          width: 36, height: 36, borderRadius: 'var(--radius-md)',
+          backgroundColor: 'var(--primary)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Star size={18} color="var(--on-primary)" fill="var(--on-primary)" />
+        </div>
       )}
+      <div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--on-dark)', letterSpacing: '-0.3px' }}>Drama Arena 5101</div>
+        <div style={{ fontSize: 11, color: 'var(--on-dark-soft)', letterSpacing: 1 }}>DIGITAL SOUVENIR</div>
+      </div>
     </div>
   );
 
@@ -210,6 +216,26 @@ export default function DashboardLayout({ children }) {
                       )}
                     </div>
                   </nav>
+                  
+                  {/* Mobile TopNav Theme Footer */}
+                  <div style={{ padding: '16px 12px', borderTop: '1px solid var(--hairline)' }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                      backgroundColor: 'var(--surface-soft)', borderRadius: 'var(--radius-md)',
+                    }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 'var(--radius-full)', backgroundColor: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-primary)', fontSize: 13, fontWeight: 600, flexShrink: 0,
+                      }}>
+                        {userInitials}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+                      </div>
+                      <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}><LogOut size={16} /></button>
+                    </div>
+                  </div>
                 </motion.div>
               </>
             )}
@@ -360,8 +386,46 @@ export default function DashboardLayout({ children }) {
                         </button>
                       );
                     })}
+                    {userData?.role === 'admin' && (
+                      <>
+                        <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
+                        <button
+                          onClick={() => { router.push('/admin'); setSidebarOpen(false); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 'var(--radius-md)', border: 'none',
+                            backgroundColor: 'color-mix(in srgb, var(--primary) 15%, transparent)',
+                            color: 'var(--primary)',
+                            fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
+                            cursor: 'pointer', width: '100%', textAlign: 'left',
+                          }}
+                        >
+                          <Star size={18} />
+                          Admin Panel
+                        </button>
+                      </>
+                    )}
                   </div>
                 </nav>
+
+                {/* Mobile Default Theme Footer */}
+                <div style={{ padding: '16px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                    backgroundColor: 'var(--surface-dark-elevated)', borderRadius: 'var(--radius-md)',
+                  }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 'var(--radius-full)', backgroundColor: 'var(--primary)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-primary)', fontSize: 13, fontWeight: 600, flexShrink: 0,
+                    }}>
+                      {userInitials}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--on-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
+                      <div style={{ fontSize: 11, color: 'var(--on-dark-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+                    </div>
+                    <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'var(--on-dark-soft)', cursor: 'pointer' }}><LogOut size={16} /></button>
+                  </div>
+                </div>
               </motion.div>
             </>
           )}

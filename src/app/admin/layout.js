@@ -50,7 +50,12 @@ export default function AdminLayout({ children }) {
           <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {logoSrc ? (
-                <img src={getDirectImageUrl(logoSrc)} alt="Logo" style={{ height: 28, objectFit: 'contain' }} />
+                <img 
+                  src={getDirectImageUrl(logoSrc)} 
+                  alt="" 
+                  style={{ height: 28, objectFit: 'contain' }} 
+                  onError={(e) => e.currentTarget.style.display = 'none'}
+                />
               ) : (
                 <div style={{
                   width: 28, height: 28, borderRadius: 'var(--radius-sm)',
@@ -98,6 +103,20 @@ export default function AdminLayout({ children }) {
 
             {/* Back to user view */}
             <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <button
+                onClick={() => router.push('/')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 12px', borderRadius: 'var(--radius-md)',
+                  border: 'none', backgroundColor: 'transparent',
+                  color: 'var(--on-dark-soft)', fontFamily: 'var(--font-body)',
+                  fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left',
+                  marginBottom: 4,
+                }}
+              >
+                <ArrowLeft size={16} />
+                Halaman Utama (Web)
+              </button>
               <button
                 onClick={() => router.push('/dashboard')}
                 style={{
@@ -164,34 +183,99 @@ export default function AdminLayout({ children }) {
                   backgroundColor: 'var(--surface-dark)', zIndex: 60,
                   display: 'flex', flexDirection: 'column',
                 }}>
-                <div style={{ padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {logoSrc ? (
-                    <img src={getDirectImageUrl(logoSrc)} alt="Logo" style={{ height: 24, objectFit: 'contain' }} />
-                  ) : (
-                    <span style={{ color: 'var(--on-dark)', fontWeight: 500 }}>Admin Panel</span>
-                  )}
+                <div style={{ padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {logoSrc ? (
+                      <img 
+                        src={getDirectImageUrl(logoSrc)} 
+                        alt="" 
+                        style={{ height: 28, objectFit: 'contain' }} 
+                        onError={(e) => e.currentTarget.style.display = 'none'}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--primary)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Star size={14} color="var(--on-primary)" fill="var(--on-primary)" />
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--on-dark)' }}>DA 5101</div>
+                      <div style={{ fontSize: 10, color: 'var(--on-dark-soft)', letterSpacing: 1, textTransform: 'uppercase' }}>Admin Panel</div>
+                    </div>
+                  </div>
                   <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--on-dark-soft)', cursor: 'pointer' }}>
                     <X size={18} />
                   </button>
                 </div>
-                <nav style={{ flex: 1, padding: '0 8px' }}>
-                  {ADMIN_NAV_ITEMS.map((item) => {
-                    const Icon = iconMap[item.icon] || LayoutDashboard;
-                    const active = isActive(item.href);
-                    return (
-                      <button key={item.href} onClick={() => { router.push(item.href); setSidebarOpen(false); }}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                          borderRadius: 'var(--radius-md)', border: 'none', width: '100%', textAlign: 'left',
-                          backgroundColor: active ? 'var(--surface-dark-elevated)' : 'transparent',
-                          color: active ? 'var(--on-dark)' : 'var(--on-dark-soft)',
-                          fontFamily: 'var(--font-body)', fontSize: 13, cursor: 'pointer',
-                        }}>
-                        <Icon size={16} />{item.label}
-                      </button>
-                    );
-                  })}
+                <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {ADMIN_NAV_ITEMS.map((item) => {
+                      const Icon = iconMap[item.icon] || LayoutDashboard;
+                      const active = isActive(item.href);
+                      return (
+                        <button key={item.href} onClick={() => { router.push(item.href); setSidebarOpen(false); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                            borderRadius: 'var(--radius-md)', border: 'none', width: '100%', textAlign: 'left',
+                            backgroundColor: active ? 'var(--surface-dark-elevated)' : 'transparent',
+                            color: active ? 'var(--on-dark)' : 'var(--on-dark-soft)',
+                            fontFamily: 'var(--font-body)', fontSize: 13, cursor: 'pointer',
+                          }}>
+                          <Icon size={16} />{item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <button
+                      onClick={() => { router.push('/'); setSidebarOpen(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 12px', borderRadius: 'var(--radius-md)',
+                        border: 'none', backgroundColor: 'transparent',
+                        color: 'var(--on-dark-soft)', fontFamily: 'var(--font-body)',
+                        fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left',
+                        marginBottom: 4,
+                      }}
+                    >
+                      <ArrowLeft size={16} />
+                      Halaman Utama (Web)
+                    </button>
+                    <button
+                      onClick={() => { router.push('/dashboard'); setSidebarOpen(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 12px', borderRadius: 'var(--radius-md)',
+                        border: 'none', backgroundColor: 'transparent',
+                        color: 'var(--on-dark-soft)', fontFamily: 'var(--font-body)',
+                        fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left',
+                      }}
+                    >
+                      <ArrowLeft size={16} />
+                      Kembali ke User View
+                    </button>
+                  </div>
                 </nav>
+
+                <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '9px 12px', borderRadius: 'var(--radius-md)',
+                      border: 'none', backgroundColor: 'transparent',
+                      color: 'var(--on-dark-soft)', fontFamily: 'var(--font-body)',
+                      fontSize: 13, cursor: 'pointer', width: '100%', textAlign: 'left',
+                    }}
+                  >
+                    <LogOut size={16} />
+                    Keluar
+                  </button>
+                </div>
               </motion.aside>
             </>
           )}
