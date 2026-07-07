@@ -28,9 +28,9 @@ export async function generateMetadata() {
   const title = "Drama Arena 5101 — Digital Souvenir";
   const description = "Koleksi Digital Eksklusif Pentas Seni Drama Arena 5101. Video penampilan, galeri foto, komik digital, soundtrack, dan konten bonus eksklusif.";
   const iconUrl = settings.faviconUrl ? getDirectImageUrl(settings.faviconUrl) : "/favicon.ico";
-  const ogImageUrl = settings.heroImageUrl 
-    ? getDirectImageUrl(settings.heroImageUrl) 
-    : (settings.logoUrl ? getDirectImageUrl(settings.logoUrl) : null);
+  const ogImageUrl = settings.logoUrl 
+    ? getDirectImageUrl(settings.logoUrl) 
+    : (settings.heroImageUrl ? getDirectImageUrl(settings.heroImageUrl) : null);
 
   return {
     title,
