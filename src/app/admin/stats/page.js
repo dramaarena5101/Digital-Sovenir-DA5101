@@ -112,7 +112,8 @@ export default function AdminStatsPage() {
           {/* Recent Activations */}
           <motion.div variants={fadeUp} custom={2} style={{ marginBottom: 32 }}>
             <h2 className="title-lg" style={{ marginBottom: 16 }}>Aktivasi Terbaru</h2>
-            <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+            <div className="table-scroll-container" style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ minWidth: 600 }}>
               {recentCodes.length === 0 ? (
                 <div style={{ padding: 32, textAlign: 'center' }}>
                   <p className="body-sm" style={{ color: 'var(--muted)' }}>Belum ada aktivasi.</p>
@@ -137,13 +138,15 @@ export default function AdminStatsPage() {
                   ))}
                 </div>
               )}
+              </div>
             </div>
           </motion.div>
 
           {/* All Users */}
           <motion.div variants={fadeUp} custom={3}>
             <h2 className="title-lg" style={{ marginBottom: 16 }}>Daftar Pengguna</h2>
-            <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+            <div className="table-scroll-container" style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ minWidth: 700 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px 1fr 40px', padding: '10px 20px', borderBottom: '1px solid var(--hairline)', gap: 12 }}>
                 <span className="caption-uppercase" style={{ fontSize: 10 }}>Nama</span>
                 <span className="caption-uppercase" style={{ fontSize: 10 }}>Email</span>
@@ -176,6 +179,7 @@ export default function AdminStatsPage() {
                   </div>
                 ))
               )}
+              </div>
             </div>
           </motion.div>
         </>

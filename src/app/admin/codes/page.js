@@ -265,22 +265,24 @@ export default function AdminCodesPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {['all', 'unused', 'used'].map((f) => (
-            <button key={f} className={`tab ${filter === f ? 'tab-active' : ''}`} onClick={() => setFilter(f)}>
-              {f === 'all' ? 'Semua' : f === 'unused' ? 'Tersedia' : 'Terpakai'}
-            </button>
-          ))}
+        <div className="table-scroll-container">
+          <div style={{ display: 'flex', gap: 4, minWidth: 'max-content' }}>
+            {['all', 'unused', 'used'].map((f) => (
+              <button key={f} className={`tab ${filter === f ? 'tab-active' : ''}`} onClick={() => setFilter(f)}>
+                {f === 'all' ? 'Semua' : f === 'unused' ? 'Tersedia' : 'Terpakai'}
+              </button>
+            ))}
+          </div>
         </div>
       </motion.div>
 
       {/* Codes Table */}
       <motion.div variants={fadeUp} custom={3}>
-        <div style={{
+        <div className="table-scroll-container" style={{
           backgroundColor: 'var(--surface-card)',
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
+          borderRadius: 'var(--radius-lg)'
         }}>
+          <div style={{ minWidth: 700 }}>
           {/* Header */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 100px 1fr 1fr 60px',
@@ -354,6 +356,7 @@ export default function AdminCodesPage() {
               </div>
             ))
           )}
+          </div>
         </div>
       </motion.div>
     </motion.div>

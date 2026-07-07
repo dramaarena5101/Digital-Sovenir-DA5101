@@ -245,7 +245,8 @@ export default function AdminVideosPage() {
       </div>
 
       {/* Video List */}
-      <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+      <div className="table-scroll-container" style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ minWidth: 700 }}>
         {loading ? (
           <div style={{ padding: 20 }}>{[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 56, marginBottom: 8 }} />)}</div>
         ) : filteredVideos.length === 0 ? (
@@ -294,6 +295,7 @@ export default function AdminVideosPage() {
             ))}
           </>
         )}
+        </div>
       </div>
 
       {/* Form Modal */}

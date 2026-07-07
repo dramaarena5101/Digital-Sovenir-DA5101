@@ -54,7 +54,8 @@ export default function AdminAudioPage() {
         <button className="btn-primary" onClick={() => setShowForm(true)} style={{ fontSize: 13, height: 36, padding: '8px 14px' }}><Plus size={14} /> Tambah Audio</button>
       </div>
 
-      <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+      <div className="table-scroll-container" style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ minWidth: 600 }}>
         {loading ? (
           <div style={{ padding: 20 }}>{[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 56, marginBottom: 8 }} />)}</div>
         ) : audios.length === 0 ? (
@@ -70,6 +71,7 @@ export default function AdminAudioPage() {
             </div>
           ))
         )}
+        </div>
       </div>
 
       <AnimatePresence>
