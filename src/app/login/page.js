@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '@/lib/auth';
 import { motion } from 'framer-motion';
-import { Star, Mail, Lock, User, ArrowRight, Chrome, ArrowLeft } from 'lucide-react';
+import { Star, Mail, Lock, User, ArrowRight, Chrome, ArrowLeft, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { getDirectImageUrl } from '@/lib/utils';
 import Hero3DModel from '@/components/ui/Hero3DModel';
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const router = useRouter();
   const { user, isActivated } = useAuth();
   const { settings } = useSettings();
@@ -99,6 +100,8 @@ export default function LoginPage() {
       minHeight: '100vh', 
       display: 'flex',
       backgroundColor: 'var(--canvas)',
+      overflow: 'hidden',
+      '--sheet-y': sheetOpen ? '0%' : 'calc(100% - 130px)',
     }}>
       {/* Left Panel — Branding with 3D Model */}
       <div style={{
@@ -113,22 +116,29 @@ export default function LoginPage() {
       }}
       className="login-left-panel"
       >
+        {/* Intro Page Noise Overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.05, mixBlendMode: 'overlay',
+          backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\'><filter id=\'n\'><feTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'2\' stitchTiles=\'stitch\'/></filter><rect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/></svg>")'
+        }} />
+        
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <Hero3DModel inline={true} animateOnMount={true} />
+          <Hero3DModel inline={true} animateOnMount={true} touchAction="none" pointerEvents="auto" />
         </div>
         
         {/* Minimal branding overlay */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          style={{ position: 'absolute', bottom: 40, zIndex: 1, textAlign: 'center', width: '100%' }}
-        >
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.5rem 1.5rem", borderRadius: 999, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6B00" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF6B00", display: "block", boxShadow: "0 0 10px #FF6B00" }} />
-            Digital Souvenir Eksklusif
-          </div>
-        </motion.div>
+        <div className="branding-overlay" style={{ position: 'absolute', zIndex: 1, textAlign: 'center', width: '100%' }}>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.5rem 1.5rem", borderRadius: 999, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6B00" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF6B00", display: "block", boxShadow: "0 0 10px #FF6B00" }} />
+              Digital Souvenir Eksklusif
+            </div>
+          </motion.div>
+        </div>
       </div>
 
       {/* Right Panel — Form */}
@@ -140,11 +150,31 @@ export default function LoginPage() {
         alignItems: 'center',
         padding: 'var(--space-xxl)',
       }}>
+        <div 
+          className="mobile-handle" 
+          onClick={() => setSheetOpen(!sheetOpen)} 
+          style={{
+             display: 'none', flexDirection: 'column', alignItems: 'center', width: '100%',
+             position: 'absolute', top: 0, left: 0, padding: '16px 0', cursor: 'pointer', zIndex: 20
+          }}
+        >
+           <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'var(--muted)', opacity: 0.2, marginBottom: 6 }} />
+           {!sheetOpen && (
+             <motion.div 
+               animate={{ opacity: [0.5, 1, 0.5] }} 
+               transition={{ repeat: Infinity, duration: 2 }}
+               style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--muted)', fontSize: 12 }}
+             >
+               Ketuk untuk login
+             </motion.div>
+           )}
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ width: '100%', maxWidth: 400, position: 'relative' }}
+          style={{ width: '100%', maxWidth: 400, position: 'relative', marginTop: 24 }}
         >
           <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--muted)', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 32, transition: 'color 0.2s', textTransform: 'uppercase', letterSpacing: '0.05em' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
@@ -302,32 +332,47 @@ export default function LoginPage() {
       </div>
 
       <style jsx>{`
+        .branding-overlay {
+          bottom: 40px;
+        }
         @media (max-width: 768px) {
           .login-container {
             flex-direction: column !important;
+            position: relative;
+          }
+          .mobile-handle {
+            display: flex !important;
           }
           .login-left-panel {
             flex: none !important;
-            height: 320px !important;
-            position: relative !important;
+            height: 100vh !important;
+            position: absolute !important;
+            inset: 0 !important;
             display: flex !important;
             width: 100% !important;
+            padding-bottom: 20vh !important;
           }
-          .login-left-panel > div:last-child {
-            display: none !important;
+          .branding-overlay {
+            bottom: 170px !important;
+            z-index: 5 !important;
           }
           .login-right-panel {
-            position: relative;
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             z-index: 10;
             background: #ffffff !important;
             margin: 0 !important;
             border-radius: 32px 32px 0 0 !important;
-            margin-top: -32px !important;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
             min-height: auto !important;
             padding: 2.5rem 1.5rem !important;
-            flex: 1 !important;
+            padding-top: 4rem !important;
+            flex: none !important;
             justify-content: flex-start !important;
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1) !important;
+            transform: translateY(var(--sheet-y)) !important;
           }
         }
       `}</style>

@@ -27,7 +27,7 @@ const SECTION_CONFIGS = {
   judges: { pos: [0, 2.0, 0], rot: [0.3, 0, 0], scale: 3.0, spread: 0.5 },
   sponsors: { pos: [0, -1, 0], rot: [-0.2, 0, 0], scale: 2.5, spread: 0.2 },
   footer: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 2.0, spread: 0 },
-  inline: { pos: [0, -0.5, 0], rot: [0.2, 0, 0], scale: 2.5, spread: 0 }, // For inline usage like Activation page
+  inline: { pos: [0, 0, 0], rot: [0.2, 0, 0], scale: 2.5, spread: 0 }, // For inline usage like Activation page
 };
 
 function Model({ url, scatterIdle, inline, animateOnMount }) {
@@ -132,7 +132,7 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
     if (isActivating) return;
     const piece = e.object;
     if (piece.isMesh && !piece.userData.isAnimating) {
-      e.stopPropagation(); // Prevent PresentationControls from taking over
+      // e.stopPropagation(); // Allow PresentationControls to take over on drag
       draggedPieceRef.current = piece;
       piece.userData.isDragging = true;
       piece.userData.clickTime = Date.now();
@@ -243,13 +243,19 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     
+    const time = state.clock.elapsedTime;
+    
     // Resolve section config (if inline, prefer currentSection if explicit, else fallback to inline)
     const targetConfig = (inline && currentSection) ? (SECTION_CONFIGS[currentSection] || SECTION_CONFIGS.inline) : (SECTION_CONFIGS[currentSection] || SECTION_CONFIGS.hero);
     
-    const dt = 1.0 - Math.exp(-8 * delta); // Frame-independent lerp factor (faster for snappier feel)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    // Shift up and slightly left on mobile inline (login page) to visually center above the bottom sheet
+    const mobileYOffset = (isMobile && inline) ? 0.5 : 0; 
+    const mobileXOffset = (isMobile && inline) ? -0.2 : 0;
     
-    groupRef.current.position.x += (targetConfig.pos[0] - groupRef.current.position.x) * dt;
-    groupRef.current.position.y += (targetConfig.pos[1] - groupRef.current.position.y) * dt;
+    const dt = 1.0 - Math.exp(-8 * delta); // Frame-independent lerp factor (faster for snappier feel)
+    groupRef.current.position.x += (targetConfig.pos[0] + mobileXOffset - groupRef.current.position.x) * dt;
+    groupRef.current.position.y += (targetConfig.pos[1] + mobileYOffset - groupRef.current.position.y) * dt;
     groupRef.current.position.z += (targetConfig.pos[2] - groupRef.current.position.z) * dt;
     
     groupRef.current.rotation.x += (targetConfig.rot[0] - groupRef.current.rotation.x) * dt;
@@ -261,7 +267,6 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
     groupRef.current.scale.set(ns, ns, ns);
 
     // 2. MOUSE PARALLAX & IDLE BREATHING (Mesh level)
-    const time = state.clock.elapsedTime;
     
     pieces.forEach((child, i) => {
       // If we are in Philosophy mode and this piece is focused, override idle
@@ -334,8 +339,8 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
 
   return (
     <PresentationControls
-      global={false} // Allows dragging the background to rotate
-      cursor={true}
+      global={true} // Allows dragging the background to rotate
+      cursor={false} // We handle cursor manually
       snap={true} // Snaps back to original rotation when released
       speed={1.5}
       zoom={1}
@@ -355,8 +360,9 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
             if (!draggedPieceRef.current) document.body.style.cursor = 'default';
           }}
         />
-        {/* Add particles matching the intro */}
-        <Sparkles count={400} scale={20} size={5} speed={0.2} opacity={0.3} color="#ffaa55" />
+        {/* Fire Particles (Floating Embers) */}
+        <Sparkles count={250} scale={10} size={2.5} speed={0.6} opacity={0.5} color="#FF6B00" />
+        <Sparkles count={150} scale={12} size={1.5} speed={0.4} opacity={0.3} color="#FFD166" />
       </group>
     </PresentationControls>
   );
@@ -392,12 +398,12 @@ function MouseCameraParallax({ inline }) {
   return null;
 }
 
-export default function Hero3DModel({ forceVisible, scatterIdle, inline, animateOnMount }) {
+export default function Hero3DModel({ forceVisible, scatterIdle = false, inline = false, animateOnMount = false, touchAction = 'auto', pointerEvents = 'none' }) {
   const introCompleted = use3DStore((state) => state.introCompleted);
   const isVisible = forceVisible || introCompleted || animateOnMount;
 
   return (
-    <div style={inline ? { width: '100%', height: '100%', position: 'relative', pointerEvents: 'none', touchAction: 'auto' } : { position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+    <div style={inline ? { width: '100%', height: '100%', position: 'relative', pointerEvents, touchAction } : { position: 'fixed', inset: 0, zIndex: 0, pointerEvents, touchAction }}>
       {/* Optional: Intro Overlay Fade */}
       {!isVisible && (
          <div style={{ position: 'absolute', inset: 0, background: '#fff', zIndex: 10, pointerEvents: 'none', transition: 'opacity 2s', opacity: isVisible ? 0 : 1 }} />
@@ -408,7 +414,7 @@ export default function Hero3DModel({ forceVisible, scatterIdle, inline, animate
         shadows={!inline}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 2]}
-        style={{ touchAction: 'auto' }}
+        style={{ touchAction, pointerEvents: 'auto' }}
       >
         <MouseCameraParallax inline={inline} />
         
