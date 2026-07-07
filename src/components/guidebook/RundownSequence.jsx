@@ -54,7 +54,7 @@ const TYPE = {
 
 function Row({ item, index }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-30px" });
+  const inView = useInView(ref, { margin: "-10% 0px -10% 0px" });
   const t = TYPE[item.type];
   const isVisual = item.type === "visual";
 
@@ -107,7 +107,7 @@ export default function RundownSequence() {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ marginBottom: "4rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <div style={{ width: 36, height: 1, background: "#FF6B00" }} />
@@ -119,7 +119,7 @@ export default function RundownSequence() {
         </motion.div>
 
         {/* Legend */}
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: "2rem" }}>
           {Object.entries(TYPE).map(([k, v]) => (
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 999, background: v.bg, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: v.color }}>

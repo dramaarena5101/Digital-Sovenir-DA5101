@@ -8,6 +8,8 @@ import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '@/lib/auth';
 import { motion } from 'framer-motion';
 import { Star, Mail, Lock, User, ArrowRight, Chrome } from 'lucide-react';
 import { getDirectImageUrl } from '@/lib/utils';
+import Hero3DModel from '@/components/ui/Hero3DModel';
+import { use3DStore } from '@/store/use3DStore';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -20,6 +22,11 @@ export default function LoginPage() {
   const { user, isActivated } = useAuth();
   const { settings } = useSettings();
   const logoSrc = settings?.logoUrl || null;
+  const setSection = use3DStore((state) => state.setCurrentSection);
+
+  useEffect(() => {
+    setSection('login');
+  }, [setSection]);
 
   const featuresList = [
     { text: 'Video Penampilan', show: settings?.showVideo !== false },
@@ -87,99 +94,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ 
+    <div className="login-container" style={{ 
       minHeight: '100vh', 
       display: 'flex',
       backgroundColor: 'var(--canvas)',
     }}>
-      {/* Left Panel — Branding */}
+      {/* Left Panel — Branding with 3D Model */}
       <div style={{
         flex: 1,
-        backgroundColor: 'var(--surface-dark)',
+        background: 'radial-gradient(120% 120% at 50% 40%, #17111f 0%, #0A0810 70%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 'var(--space-xxl)',
         position: 'relative',
         overflow: 'hidden',
       }}
       className="login-left-panel"
       >
-        {/* Decorative elements */}
-        <div style={{
-          position: 'absolute', top: -100, right: -100,
-          width: 300, height: 300,
-          background: 'radial-gradient(circle, rgba(204,120,92,0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: -80, left: -80,
-          width: 250, height: 250,
-          background: 'radial-gradient(circle, rgba(93,184,166,0.1) 0%, transparent 70%)',
-          borderRadius: '50%',
-        }} />
-
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <Hero3DModel inline={true} animateOnMount={true} />
+        </div>
+        
+        {/* Minimal branding overlay */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 400 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          style={{ position: 'absolute', bottom: 40, zIndex: 1, textAlign: 'center', width: '100%' }}
         >
-          {logoSrc ? (
-            <img src={getDirectImageUrl(logoSrc)} alt="Logo" style={{ height: 100, objectFit: 'contain', margin: '0 auto 24px', display: 'block' }} />
-          ) : (
-            <>
-              <div style={{
-                width: 64, height: 64, borderRadius: 'var(--radius-lg)',
-                backgroundColor: 'var(--primary)', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 24px',
-              }}>
-                <Star size={32} color="var(--on-primary)" fill="var(--on-primary)" />
-              </div>
-              <h1 style={{
-                fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 400,
-                color: 'var(--on-dark)', letterSpacing: '-1px', lineHeight: 1.1,
-                marginBottom: 16,
-              }}>
-                Drama Arena
-                <br />
-                <span style={{ color: 'var(--primary)' }}>5101</span>
-              </h1>
-            </>
-          )}
-          <p style={{ color: 'var(--on-dark-soft)', fontSize: 16, lineHeight: 1.6 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.5rem 1.5rem", borderRadius: 999, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6B00" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF6B00", display: "block", boxShadow: "0 0 10px #FF6B00" }} />
             Digital Souvenir Eksklusif
-            <br />
-            Pentas Seni
-          </p>
-
-          {/* Mini feature list */}
-          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {visibleFeatures.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + i * 0.1 }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  backgroundColor: 'var(--surface-dark-elevated)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '10px 16px',
-                }}
-              >
-                <span style={{ fontSize: 16 }}>{item.text.split(' ')[0]}</span>
-                <span style={{ color: 'var(--on-dark-soft)', fontSize: 14 }}>{item.text.split(' ').slice(1).join(' ')}</span>
-              </motion.div>
-            ))}
           </div>
         </motion.div>
       </div>
 
       {/* Right Panel — Form */}
-      <div style={{
+      <div className="login-right-panel" style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
@@ -342,8 +294,31 @@ export default function LoginPage() {
 
       <style jsx>{`
         @media (max-width: 768px) {
+          .login-container {
+            flex-direction: column !important;
+          }
           .login-left-panel {
+            flex: none !important;
+            height: 320px !important;
+            position: relative !important;
+            display: flex !important;
+            width: 100% !important;
+          }
+          .login-left-panel > div:last-child {
             display: none !important;
+          }
+          .login-right-panel {
+            position: relative;
+            z-index: 10;
+            background: #ffffff !important;
+            margin: 0 !important;
+            border-radius: 32px 32px 0 0 !important;
+            margin-top: -32px !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            min-height: auto !important;
+            padding: 2.5rem 1.5rem !important;
+            flex: 1 !important;
+            justify-content: flex-start !important;
           }
         }
       `}</style>

@@ -10,7 +10,7 @@ export default function Judges() {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ marginBottom: "4rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <div style={{ width: 36, height: 1, background: "#FF6B00" }} />
@@ -25,7 +25,7 @@ export default function Judges() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
           
           {/* Pimpinan PMDG */}
-          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
             style={{ padding: "2rem", borderRadius: 24, background: "#FFF7ED", border: "1.5px solid #FFEDD5" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#FF6B00" }} />
@@ -42,7 +42,7 @@ export default function Judges() {
           </motion.div>
 
           {/* Ketua Lembaga */}
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }} transition={{ delay: 0.1 }}
             style={{ padding: "2rem", borderRadius: 24, background: "#F8FAFC", border: "1.5px solid #E2E8F0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#94A3B8" }} />
@@ -59,7 +59,7 @@ export default function Judges() {
           </motion.div>
 
           {/* Tim Dewan Juri */}
-          <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
+          <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }} transition={{ delay: 0.2 }}
             style={{ padding: "2rem", borderRadius: 24, background: "#F0F9FF", border: "1.5px solid #E0F2FE", gridColumn: "span 1" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#0EA5E9" }} />

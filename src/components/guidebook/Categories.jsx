@@ -59,7 +59,7 @@ export default function Categories() {
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: "3.5rem" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>

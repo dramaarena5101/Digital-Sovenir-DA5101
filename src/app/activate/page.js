@@ -130,8 +130,6 @@ export default function ActivatePage() {
       padding: 'var(--space-lg)',
       position: 'relative'
     }}>
-      <Hero3DModel />
-      
       {/* UI Wrapper to stay above 3D */}
       <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {/* Logo */}
@@ -141,12 +139,10 @@ export default function ActivatePage() {
         style={{ marginBottom: 48, textAlign: 'center' }}
       >
         <div style={{
-          width: 56, height: 56, borderRadius: 'var(--radius-lg)',
-          backgroundColor: 'var(--primary)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
+          width: 200, height: 200,
           margin: '0 auto 16px',
         }}>
-          <Star size={28} color="var(--on-primary)" fill="var(--on-primary)" />
+          <Hero3DModel forceVisible={true} inline={true} animateOnMount={true} />
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--ink)', letterSpacing: '-0.3px' }}>
           Drama Arena <span style={{ color: 'var(--primary)' }}>5101</span>

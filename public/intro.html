@@ -603,12 +603,34 @@
         <div class="credit">Rancangan 3D &amp; Identitas Visual — Drama Arena 5101</div>
       </div>
     </section>
+
+    <section class="step align-center" id="step-6" style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+      <div class="panel" style="background: transparent; box-shadow: none; border: none; backdrop-filter: none;">
+        <div id="end-instruction" style="
+          opacity: 0; pointer-events: none; transition: opacity 1s ease;
+          color: var(--paper-dim); font-family: var(--mono); font-size: 11px;
+          letter-spacing: 0.2em; text-transform: uppercase; text-align: center;
+          margin-top: 120px;
+        ">
+          Tahan bintang tengah untuk melepas energi
+        </div>
+    </section>
   </main>
 
-  <footer>
+  <footer id="main-footer" style="transition: opacity 0.5s ease;">
     <span>© Drama Arena 5101</span>
     <span>Pentas Seni Darussalam</span>
   </footer>
+
+  <!-- Puzzle Instruction -->
+  <div id="puzzle-instruction" style="
+    position: fixed; top: 120px; left: 0; right: 0; text-align: center;
+    color: var(--paper-dim); font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase; pointer-events: none;
+    opacity: 0; transition: opacity 1s ease; z-index: 40;
+  ">
+    Tarik dan susun kembali pecahan lambang
+  </div>
 
   <script type="importmap">
 {
@@ -884,6 +906,9 @@
     const dragPlane = new THREE.Plane();
     const dragStartPoint = new THREE.Vector3();
     let clickTime = 0;
+    let holdStartTime = 0;
+    let isHoldingCenter = false;
+    let isExploding = false;
 
     addEventListener("pointerdown", (e) => {
       if (isActivating) return;
@@ -897,6 +922,13 @@
         let n = intersects[0].object; let key = null;
         while (n) { if (nodeMap[n.name]) { key = nodeMap[n.name]; break; } n = n.parent; }
         if (key) {
+          if (targetProgress > 0.95 && key === 'mid' && !isActivating && !isExploding) {
+            isHoldingCenter = true;
+            holdStartTime = Date.now();
+            Synth.playClick();
+            document.body.style.cursor = 'wait';
+            return;
+          }
           isDraggingPart = true;
           draggedKey = key;
           clickTime = Date.now();
@@ -959,6 +991,7 @@
               if (PARTKEYS.every(k => runtime[k].isSnapped)) {
                 isPuzzleActive = false;
                 document.body.classList.remove('puzzle-mode');
+                document.getElementById('puzzle-instruction').style.opacity = '0';
                 setTimeout(() => {
                   Synth.playAwakening();
                   introStart = clock.getElapsedTime();
@@ -971,6 +1004,10 @@
     });
 
     addEventListener("pointerup", (e) => {
+      if (isHoldingCenter && !isExploding) {
+        isHoldingCenter = false;
+        document.body.style.cursor = 'default';
+      }
       if (isDraggingPart && draggedKey) {
         const rt = runtime[draggedKey];
         const dragDuration = Date.now() - clickTime;
@@ -982,6 +1019,13 @@
       isDraggingPart = false;
       draggedKey = null;
       document.body.style.cursor = isHovered && !isActivating ? 'pointer' : 'default';
+    });
+
+    addEventListener("pointerleave", (e) => {
+      if (isHoldingCenter && !isExploding) {
+        isHoldingCenter = false;
+        document.body.style.cursor = 'default';
+      }
     });
 
     const loaderEl = document.getElementById("loader");
@@ -1048,6 +1092,7 @@
         loaderEl.style.display = 'none';
         document.body.classList.add('show-blueprint');
         isPuzzleActive = true;
+        document.getElementById('puzzle-instruction').style.opacity = '1';
         animate();
       }, 800);
     }
@@ -1058,6 +1103,7 @@
       { cam: { x: -0.9, y: -0.15, z: 3.3 }, rotY: 0.35, states: { frame: { op: 0.1, em: 0.15, ex: 0 }, mid: { op: 1, em: 1.4, ex: 0.18 }, p1: { op: 0.1, em: 0.15, ex: 0 }, p2: { op: 0.1, em: 0.15, ex: 0 }, p3: { op: 0.1, em: 0.15, ex: 0 }, p4: { op: 0.1, em: 0.15, ex: 0 } } },
       { cam: { x: 0, y: 0.2, z: 4.1 }, rotY: 0.0, states: { frame: { op: 0.1, em: 0.15, ex: 0 }, mid: { op: 0.1, em: 0.15, ex: 0 }, p1: { op: 1, em: 1.1, ex: 0.12 }, p2: { op: 1, em: 1.1, ex: 0.12 }, p3: { op: 1, em: 1.1, ex: 0.12 }, p4: { op: 1, em: 1.1, ex: 0.12 } } },
       { cam: { x: 0, y: 0, z: 7.4 }, rotY: 0.0, states: { frame: { op: 1, em: 0.35, ex: 0 }, mid: { op: 1, em: 0.7, ex: 0 }, p1: { op: 1, em: 0.4, ex: 0 }, p2: { op: 1, em: 0.4, ex: 0 }, p3: { op: 1, em: 0.4, ex: 0 }, p4: { op: 1, em: 0.4, ex: 0 } } },
+      { cam: { x: 0, y: 0, z: 5.5 }, rotY: 0.0, states: { frame: { op: 1, em: 0.8, ex: 0 }, mid: { op: 1, em: 1.2, ex: 0 }, p1: { op: 1, em: 1.0, ex: 0 }, p2: { op: 1, em: 1.0, ex: 0 }, p3: { op: 1, em: 1.0, ex: 0 }, p4: { op: 1, em: 1.0, ex: 0 } } },
     ];
 
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -1081,10 +1127,23 @@
 
     /* ---------------- scroll progress & revealing text ---------------- */
     let targetProgress = 0, shownProgress = 0;
+    const endInst = document.getElementById('end-instruction');
+    const footer = document.getElementById('main-footer');
+    
     function updateProgress() {
       const max = document.documentElement.scrollHeight - innerHeight;
       targetProgress = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
       document.body.classList.toggle("scrolled", scrollY > 40);
+      
+      if (endInst) {
+        if (targetProgress > 0.95) {
+          endInst.style.opacity = '1';
+          footer.style.opacity = '0';
+        } else {
+          endInst.style.opacity = '0';
+          footer.style.opacity = '1';
+        }
+      }
     }
     addEventListener("scroll", updateProgress, { passive: true });
     updateProgress();
@@ -1293,6 +1352,38 @@
         } else {
           targetEx = kfFrame.states[key].ex * EXPLODE_SCALE[key]; targetOp = kfFrame.states[key].op;
           targetEm = kfFrame.states[key].em;
+          
+          if (shownProgress > 0.95) {
+             targetEm += Math.max(0, Math.sin(elapsed * 4) * 0.8);
+          }
+        }
+
+        if (isHoldingCenter && !isExploding && !isActivating) {
+          const holdDuration = Date.now() - holdStartTime;
+          const chargeRatio = Math.min(holdDuration / 1500, 1.0); // 1.5 seconds to charge
+          
+          targetEx += chargeRatio * 1.5;
+          targetEm += chargeRatio * 2.0;
+          // Shake effect
+          rt.tiltX = (Math.random() - 0.5) * chargeRatio * 0.2;
+          rt.tiltY = (Math.random() - 0.5) * chargeRatio * 0.2;
+
+          if (holdDuration >= 1500) {
+            isExploding = true;
+            isActivating = true;
+            activationElapsed = 0;
+            Synth.playAwakening();
+            document.getElementById('end-instruction').style.opacity = '0';
+            document.body.style.transition = 'opacity 2s ease';
+            setTimeout(() => { document.body.style.opacity = '0'; }, 1000);
+            setTimeout(() => { window.parent.postMessage('FINISH_INTRO', '*'); }, 3000);
+            // Blast particles!
+            for (const k of PARTKEYS) {
+              runtime[k].ex = EXPLODE_SCALE[k] * 6.0;
+              runtime[k].tiltX = (Math.random() - 0.5) * 4;
+              runtime[k].tiltY = (Math.random() - 0.5) * 4;
+            }
+          }
         }
 
         rt.exVel += (targetEx - rt.ex) * 90 * dt; rt.exVel *= Math.exp(-11 * dt); rt.ex += rt.exVel * dt;

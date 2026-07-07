@@ -42,7 +42,7 @@ export default function GuidebookTheme({
   return (
     <div style={{ minHeight: "100vh", background: "transparent", color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif", position: "relative" }}>
       {/* 3D Background */}
-      {loaded && <Hero3DModel />}
+      {loaded && <Hero3DModel animateOnMount={true} />}
       
       <LoadingScreen onDone={() => setLoaded(true)} />
       {loaded && (

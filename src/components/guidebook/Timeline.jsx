@@ -4,7 +4,7 @@ import { timeline } from "@/lib/guidebookContent";
 
 function TimelineItem({ item, index }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { margin: "-10% 0px -10% 0px" });
   const isLeft = index % 2 === 0;
   const isSpecial = item.event.includes("Time to Shine");
 
@@ -65,7 +65,7 @@ export default function Timeline() {
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ textAlign: "center", marginBottom: "5rem" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
             <div style={{ width: 36, height: 1, background: "#FF6B00" }} />
@@ -87,7 +87,7 @@ export default function Timeline() {
         </div>
 
         {/* Footer badge */}
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ display: "flex", justifyContent: "center", marginTop: "5rem" }}>
           <div style={{ padding: "1rem 3rem", borderRadius: 999, background: "#111827", color: "#fff", fontFamily: "'Bebas Neue', cursive", fontSize: 20, letterSpacing: "0.2em", boxShadow: "0 8px 24px rgba(17,24,39,0.2)" }}>
             ✦ DRAMA ARENA 5101 ✦

@@ -19,10 +19,10 @@ const S = {
 
 function Fade({ children, delay = 0, style = {} }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { margin: "-10% 0px -10% 0px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 28 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: "easeOut" }} style={style}>
+    <motion.div ref={ref} initial={{ opacity: 0, y: 40 }} animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.8, delay, ease: "easeOut" }} style={style}>
       {children}
     </motion.div>
   );
@@ -50,103 +50,103 @@ function InteractivePhilosophy() {
     }
   }, [inView, activeIdx, setSection, setPhilosophyIdx]);
 
-  // Circular layout logic
-  const radius = 140; // distance from center
-  const total = logoPhilosophy.length;
+  // Static positions for the hotspots relative to the center 3D model
+  const hotspots = [
+    { top: "25%", left: "30%", line: { w: 80, h: 2, top: "50%", left: "100%" } }, // Corner
+    { top: "70%", left: "48%", line: { w: 2, h: 80, bottom: "100%", left: "50%" } }, // Diamond
+    { top: "35%", left: "75%", line: { w: 80, h: 2, top: "50%", right: "100%" } }, // Frame
+    { top: "85%", left: "70%", line: { w: 2, h: 80, bottom: "100%", left: "50%" } }  // D & A
+  ];
 
   return (
-    <div ref={containerRef} style={{ position: "relative", marginTop: "4rem", marginBottom: "4rem" }}>
-      {/* Background soft circle */}
-      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "clamp(400px, 90vw, 700px)", height: "clamp(400px, 90vw, 700px)", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,0,0.06) 0%, transparent 70%)", zIndex: 0, pointerEvents: "none" }} />
-
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1, minHeight: 600 }}>
+    <div ref={containerRef} style={{ position: "relative", marginTop: "2rem", marginBottom: "4rem" }}>
+      {/* Interactive area matching the 3D model size */}
+      <div style={{ position: "relative", width: "100%", height: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
         
-        {/* The Interactive Ring */}
-        <div style={{ position: "relative", width: "100%", height: 400, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "2rem" }}>
-          
-          {/* Icons in Circle */}
-          {logoPhilosophy.map((item, i) => {
-            const angle = (i * (360 / total)) - 90; // offset to start from top
-            const x = radius * Math.cos((angle * Math.PI) / 180);
-            const y = radius * Math.sin((angle * Math.PI) / 180);
+        {/* Hotspots */}
+        {logoPhilosophy.map((item, i) => {
+          const pos = hotspots[i] || { top: "50%", left: "50%" };
+          const isActive = activeIdx === i;
 
-            return (
+          return (
+            <div key={i} style={{ position: "absolute", top: pos.top, left: pos.left, transform: "translate(-50%, -50%)", zIndex: 20 }}>
+              
+              {/* Connecting Line (Optional, CSS based) */}
+              {isActive && pos.line && (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                  style={{ 
+                    position: "absolute", background: "#FF6B00", zIndex: -1,
+                    width: pos.line.w, height: pos.line.h, 
+                    top: pos.line.top, bottom: pos.line.bottom, left: pos.line.left, right: pos.line.right 
+                  }} 
+                />
+              )}
+
               <motion.button
-                key={i}
                 onClick={() => setActiveIdx(i)}
                 initial={{ opacity: 0, scale: 0 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-10% 0px -10% 0px" }}
                 transition={{ delay: i * 0.1, type: "spring" }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 style={{
-                  position: "absolute",
-                  left: `calc(50% + ${x}px - 32px)`,
-                  top: `calc(50% + ${y}px - 32px)`,
-                  width: 64, height: 64, borderRadius: "50%",
-                  background: activeIdx === i ? "#FF6B00" : "#fff",
-                  border: `2px solid ${activeIdx === i ? "#FF6B00" : "#E5E7EB"}`,
+                  width: 56, height: 56, borderRadius: "50%",
+                  background: isActive ? "#FF6B00" : "rgba(255,255,255,0.8)",
+                  backdropFilter: "blur(4px)",
+                  border: `2px solid ${isActive ? "#FF6B00" : "#E5E7EB"}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: activeIdx === i ? "0 8px 20px rgba(255,107,0,0.3)" : "0 4px 12px rgba(0,0,0,0.05)",
-                  cursor: "pointer", zIndex: 20, overflow: "hidden", padding: 8
+                  boxShadow: isActive ? "0 8px 20px rgba(255,107,0,0.3)" : "0 4px 12px rgba(0,0,0,0.05)",
+                  cursor: "pointer", overflow: "hidden", padding: 8
                 }}
               >
                 {item.icon.startsWith("/") || item.icon.includes(".") ? (
-                  <img src={item.icon} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "contain", filter: activeIdx === i ? "brightness(0) invert(1)" : "none" }} />
+                  <img src={item.icon} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "contain", filter: isActive ? "brightness(0) invert(1)" : "none" }} />
                 ) : (
-                  <span style={{ fontFamily: FONT_WONDRA, fontSize: 24, fontWeight: 700, color: activeIdx === i ? "#fff" : "#FF6B00" }}>{item.icon}</span>
+                  <span style={{ fontFamily: FONT_WONDRA, fontSize: 20, fontWeight: 700, color: isActive ? "#fff" : "#FF6B00" }}>{item.icon}</span>
                 )}
               </motion.button>
-            );
-          })}
-
-          {/* Lines from center to icons */}
-          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 5, pointerEvents: "none" }}>
-            {logoPhilosophy.map((_, i) => {
-              const angle = (i * (360 / total)) - 90;
-              const x = radius * Math.cos((angle * Math.PI) / 180);
-              const y = radius * Math.sin((angle * Math.PI) / 180);
-              return (
-                <line 
-                  key={i} 
-                  x1="50%" y1="50%" x2={`calc(50% + ${x}px)`} y2={`calc(50% + ${y}px)`} 
-                  stroke={activeIdx === i ? "#FF6B00" : "#F3F4F6"} 
-                  strokeWidth={activeIdx === i ? 2 : 1} 
-                  strokeDasharray={activeIdx === i ? "none" : "4 4"}
+              
+              {/* Pulse effect when active */}
+              {isActive && (
+                <motion.div
+                  initial={{ scale: 1, opacity: 0.5 }}
+                  animate={{ scale: 2, opacity: 0 }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeOut" }}
+                  style={{
+                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                    borderRadius: "50%", border: "2px solid #FF6B00", zIndex: -1
+                  }}
                 />
-              );
-            })}
-          </svg>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-          {/* Central Logo Placeholder (The 3D model will sit here instead of the static image) */}
-          <div style={{ width: 180, height: 180, borderRadius: "50%", background: "transparent", border: "1px dashed rgba(255,107,0,0.3)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1 }} />
-        </div>
-
-        {/* Content Viewer (Smooth Transition) */}
-        <div style={{ width: "100%", maxWidth: 650, position: "relative" }}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeIdx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              style={{ textAlign: "center", background: "rgba(255, 255, 255, 0.8)", padding: "2.5rem", borderRadius: 24, border: "1px solid #F3F4F6", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}
-            >
-              <div style={{ display: "inline-flex", padding: "8px 20px", borderRadius: 99, background: "#FFF0E6", color: "#FF6B00", fontFamily: FONT_NEULIS, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>
-                FILOSOFI ELEMEN
-              </div>
-              <h4 style={{ fontFamily: FONT_BEBAS, fontSize: "clamp(32px, 5vw, 48px)", color: "#111827", marginBottom: 16, letterSpacing: "0.05em", lineHeight: 1 }}>
-                {logoPhilosophy[activeIdx].title}
-              </h4>
-              <p style={{ fontFamily: FONT_NEULIS, fontSize: 16, color: "#4B5563", lineHeight: 1.8, margin: 0 }}>
-                {logoPhilosophy[activeIdx].desc}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
+      {/* Content Viewer (Smooth Transition) */}
+      <div style={{ width: "100%", maxWidth: 650, position: "relative", margin: "0 auto" }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeIdx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+            style={{ textAlign: "center", background: "rgba(255, 255, 255, 0.8)", padding: "2.5rem", borderRadius: 24, border: "1px solid #F3F4F6", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}
+          >
+            <div style={{ display: "inline-flex", padding: "8px 20px", borderRadius: 99, background: "#FFF0E6", color: "#FF6B00", fontFamily: FONT_NEULIS, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>
+              Filosofi Elemen
+            </div>
+            <h4 style={{ fontFamily: FONT_BEBAS, fontSize: "clamp(32px, 5vw, 48px)", color: "#111827", marginBottom: 16, letterSpacing: "0.05em", lineHeight: 1 }}>
+              {logoPhilosophy[activeIdx].title}
+            </h4>
+            <p style={{ fontFamily: FONT_NEULIS, fontSize: 16, color: "#4B5563", lineHeight: 1.8, margin: 0 }}>
+              {logoPhilosophy[activeIdx].desc}
+            </p>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -188,7 +188,7 @@ export default function About() {
                 alt="Jargon DA"
                 initial={{ opacity: 0, scale: 0.5, rotate: 15, x: 20 }}
                 whileInView={{ opacity: 1, scale: 1, rotate: -8, x: 0 }}
-                viewport={{ once: true }}
+                viewport={{ margin: "-10% 0px -10% 0px" }}
                 transition={{ type: "spring", damping: 15, stiffness: 100, delay: 0.3 }}
                 style={{ position: "absolute", top: -35, right: -25, width: "clamp(100px, 20vw, 140px)", height: "auto", zIndex: 20, filter: "drop-shadow(0 8px 16px rgba(255,107,0,0.25))", transformOrigin: "bottom right" }}
                 onError={e => e.target.style.display = 'none'}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { label: "Home", href: "#home" },
@@ -13,6 +14,7 @@ const navItems = [
 export default function Navbar({ onReplayIntro }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -85,6 +87,13 @@ export default function Navbar({ onReplayIntro }) {
                 <a key={item.label} href={item.href} className="nav-link">{item.label}</a>
               ))}
             </div>
+
+            <a href={user ? "/dashboard" : "/login"} style={{ padding: "0.65rem 1.2rem", borderRadius: 999, background: "transparent", color: "#4B5563", border: "1.5px solid #E5E7EB", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", textDecoration: "none", whiteSpace: "nowrap", transition: "all 0.2s", marginRight: "0.25rem" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#F3F4F6"; e.currentTarget.style.color = "#111827"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#4B5563"; }}>
+              {user ? "Dashboard" : "Login"}
+            </a>
+
             <a href="#performances" style={{ padding: "0.65rem 1.5rem", borderRadius: 999, background: "#FF6B00", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", textDecoration: "none", boxShadow: "0 4px 14px rgba(255,107,0,0.3)", whiteSpace: "nowrap", transition: "all 0.2s" }}
               onMouseEnter={e => { e.currentTarget.style.background = "#111827"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.2)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "#FF6B00"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(255,107,0,0.3)"; }}>
@@ -123,8 +132,14 @@ export default function Navbar({ onReplayIntro }) {
                     {item.label}
                   </a>
                 ))}
+                
+                <a href={user ? "/dashboard" : "/login"} onClick={() => setMobileOpen(false)}
+                  style={{ marginTop: "1rem", padding: "1rem", borderRadius: 14, background: "#F9FAFB", color: "#111827", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", textDecoration: "none", border: "1.5px solid #E5E7EB" }}>
+                  {user ? "Dashboard" : "Login"}
+                </a>
+
                 <a href="#performances" onClick={() => setMobileOpen(false)}
-                  style={{ marginTop: "0.75rem", padding: "1rem", borderRadius: 14, background: "#FF6B00", color: "#fff", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", textDecoration: "none", boxShadow: "0 4px 16px rgba(255,107,0,0.3)" }}>
+                  style={{ marginTop: "0.5rem", padding: "1rem", borderRadius: 14, background: "#FF6B00", color: "#fff", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", textDecoration: "none", boxShadow: "0 4px 16px rgba(255,107,0,0.3)" }}>
                   Buka Digital Guide
                 </a>
               </div>

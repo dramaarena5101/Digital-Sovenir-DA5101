@@ -8,7 +8,7 @@ const FONT = { neulis: "'Plus Jakarta Sans', sans-serif", bebas: "'Bebas Neue', 
 function useCountUp(target, duration = 1800) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { margin: "-10% 0px -10% 0px" });
   const started = useRef(false);
   if (inView && !started.current) {
     started.current = true;
@@ -293,7 +293,7 @@ export default function Performances() {
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: "3.5rem" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
@@ -338,7 +338,7 @@ export default function Performances() {
         </div>
 
         {/* Filter tabs */}
-        <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ margin: "-10% 0px -10% 0px" }}
           style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "2rem" }}>
           {FILTERS.map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
