@@ -6,7 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '@/lib/auth';
 import { motion } from 'framer-motion';
-import { Star, Mail, Lock, User, ArrowRight, Chrome } from 'lucide-react';
+import { Star, Mail, Lock, User, ArrowRight, Chrome, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { getDirectImageUrl } from '@/lib/utils';
 import Hero3DModel from '@/components/ui/Hero3DModel';
 import { use3DStore } from '@/store/use3DStore';
@@ -143,8 +144,16 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ width: '100%', maxWidth: 400 }}
+          style={{ width: '100%', maxWidth: 400, position: 'relative' }}
         >
+          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--muted)', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 32, transition: 'color 0.2s', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--muted)'}
+          >
+            <ArrowLeft size={16} />
+            Kembali ke Beranda
+          </Link>
+
           <h2 className="display-sm" style={{ marginBottom: 8, fontFamily: 'var(--font-bebas)', letterSpacing: '0.05em', fontSize: '2.5rem' }}>
             {mode === 'login' ? 'Selamat Datang' : 'Buat Akun'}
           </h2>

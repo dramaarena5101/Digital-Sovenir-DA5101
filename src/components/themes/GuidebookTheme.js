@@ -33,10 +33,35 @@ export default function GuidebookTheme({
   user, isActivated, settings, logoSrc, visibleFeatures, handleCTA, router
 }) {
   const [loaded, setLoaded] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
+  const introCompleted = use3DStore((state) => state.introCompleted);
+  const setIntroCompleted = use3DStore((state) => state.setIntroCompleted);
+  const [showIntro, setShowIntro] = useState(!introCompleted);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isCompleted = sessionStorage.getItem('da5101_intro_completed') === 'true';
+      if (isCompleted && !introCompleted) {
+        setIntroCompleted(true);
+        setShowIntro(false);
+      }
+    }
+  }, [introCompleted, setIntroCompleted]);
+
+  const handleIntroComplete = () => {
+    setIntroCompleted(true);
+    setShowIntro(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('da5101_intro_completed', 'true');
+    }
+  };
+
+  const handleReplayIntro = () => {
+    setIntroCompleted(false);
+    setShowIntro(true);
+  };
 
   if (showIntro) {
-    return <StorytellingIntro onComplete={() => setShowIntro(false)} />;
+    return <StorytellingIntro onComplete={handleIntroComplete} />;
   }
 
   return (
@@ -47,7 +72,7 @@ export default function GuidebookTheme({
       <LoadingScreen onDone={() => setLoaded(true)} />
       {loaded && (
         <div style={{ position: "relative", zIndex: 10 }}>
-          <Navbar onReplayIntro={() => setShowIntro(true)} />
+          <Navbar onReplayIntro={handleReplayIntro} />
           
           <SectionWatcher name="hero"><Hero /></SectionWatcher>
           <Ticker />
