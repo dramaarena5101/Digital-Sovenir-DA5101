@@ -182,6 +182,10 @@ export async function addAudio(data) {
   });
 }
 
+export async function updateAudio(id, data) {
+  return updateDoc(doc(db, 'audios', id), data);
+}
+
 export async function deleteAudio(id) {
   return deleteDoc(doc(db, 'audios', id));
 }

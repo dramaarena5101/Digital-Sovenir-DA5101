@@ -5,7 +5,8 @@ import { getAudios } from '@/lib/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Clock, VolumeX, ListMusic, Repeat, Shuffle } from 'lucide-react';
 import Hero3DModel from '@/components/ui/Hero3DModel';
-import ReactPlayer from 'react-player';
+import dynamic from 'next/dynamic';
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 // Sample Data Generator
 const sampleTracks = [
@@ -49,6 +50,8 @@ export default function SoundtrackPage() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef(null);
+  const ytRef = useRef(null);
+  const isYouTube = currentTrack?.audioUrl?.includes('youtube.com') || currentTrack?.audioUrl?.includes('youtu.be');
   const [isMobile, setIsMobile] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState(0); // 0: off, 1: all, 2: one
@@ -58,8 +61,46 @@ export default function SoundtrackPage() {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // Suppress harmless browser AbortErrors caused by rapid play/pause
+    const handleUnhandledRejection = (e) => {
+      if (e.reason && e.reason.name === 'AbortError') {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current && currentTrack) {
+      if (!isYouTube) {
+        if (audioRef.current.src !== currentTrack.audioUrl) {
+          audioRef.current.src = currentTrack.audioUrl;
+        }
+        if (isPlaying) {
+          const p = audioRef.current.play();
+          if (p !== undefined) {
+            p.catch(error => {
+              if (error.name !== 'AbortError') {
+                console.warn("Playback prevented:", error);
+                setIsPlaying(false);
+              }
+            });
+          }
+        } else {
+          audioRef.current.pause();
+        }
+      } else {
+        // If switched to YouTube, make sure native audio stops
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying, isYouTube, currentTrack]);
 
   const loadTracks = async () => {
     setLoading(true);
@@ -126,21 +167,33 @@ export default function SoundtrackPage() {
   };
 
   const seek = (e) => {
-    if (!audioRef.current || !duration) return;
+    if (!duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const pct = Math.max(0, Math.min(1, x / rect.width));
-    audioRef.current.seekTo(pct, 'fraction');
-    setCurrentTime(pct * duration);
+    const newTime = pct * duration;
+    setCurrentTime(newTime);
+    
+    if (isYouTube && ytRef.current) {
+      ytRef.current.seekTo(pct, 'fraction');
+    } else if (!isYouTube && audioRef.current) {
+      audioRef.current.currentTime = newTime;
+    }
   };
 
   const handleVolumeChange = (e) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
+    if (!isYouTube && audioRef.current) {
+      audioRef.current.volume = val;
+    }
     if (val > 0 && isMuted) setIsMuted(false);
   };
 
   const toggleMute = () => {
+    if (!isYouTube && audioRef.current) {
+      audioRef.current.volume = isMuted ? (volume || 1) : 0;
+    }
     setIsMuted(!isMuted);
   };
 
@@ -245,25 +298,37 @@ export default function SoundtrackPage() {
         ))}
       </div>
 
-      <ReactPlayer
+      <audio
         ref={audioRef}
-        url={currentTrack?.audioUrl}
-        playing={isPlaying}
+        loop={repeatMode === 2}
+        onTimeUpdate={(e) => { if (!isYouTube) setCurrentTime(e.target.currentTime); }}
+        onDurationChange={(e) => { if (!isYouTube) setDuration(e.target.duration); }}
+        onEnded={() => { if (!isYouTube) handleEnded(); }}
+      />
+
+      <ReactPlayer
+        ref={ytRef}
+        url={isYouTube ? currentTrack?.audioUrl : undefined}
+        playing={isYouTube && isPlaying}
         loop={repeatMode === 2}
         volume={isMuted ? 0 : volume}
         onProgress={(state) => {
-          setCurrentTime(state.playedSeconds);
-          if (audioRef.current) {
-            const d = audioRef.current.getDuration();
-            if (d && d !== duration) setDuration(d);
+          if (isYouTube) {
+            setCurrentTime(state.playedSeconds);
+            if (ytRef.current) {
+              const d = ytRef.current.getDuration();
+              if (d && d !== duration) setDuration(d);
+            }
           }
         }}
-        onEnded={handleEnded}
-        onError={(e) => console.warn('Player Error:', e)}
-        style={{ display: 'none' }}
-        width="0"
-        height="0"
-        config={{ file: { forceAudio: true }, youtube: { playerVars: { showinfo: 0, controls: 0 } } }}
+        onEnded={() => { if (isYouTube) handleEnded(); }}
+        onError={(e) => {
+          console.warn('Player Error:', e);
+        }}
+        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+        width="1px"
+        height="1px"
+        playsinline={true}
       />
 
       {/* Main Content Area */}

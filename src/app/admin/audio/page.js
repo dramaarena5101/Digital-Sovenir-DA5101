@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAudios, addAudio, deleteAudio } from '@/lib/firestore';
+import { getAudios, addAudio, deleteAudio, updateAudio } from '@/lib/firestore';
 import { uploadAudioFile } from '@/lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Plus, Trash2, X, Upload, Save } from 'lucide-react';
+import { Music, Plus, Trash2, X, Upload, Save, Edit2 } from 'lucide-react';
 import { useDialog } from '@/contexts/DialogContext';
 
 const sampleTracks = [
@@ -43,6 +43,7 @@ export default function AdminAudioPage() {
   const [audios, setAudios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ title: '', artist: '', coverUrl: '', order: 0 });
   const [saving, setSaving] = useState(false);
   const [urlInput, setUrlInput] = useState('');
@@ -82,12 +83,34 @@ export default function AdminAudioPage() {
         }
       }
       
-      await addAudio({ ...form, audioUrl });
-      setShowForm(false); setForm({ title: '', artist: '', coverUrl: '', order: audios.length }); setUrlInput('');
+      if (editingId) {
+        await updateAudio(editingId, { ...form, audioUrl });
+        showToast('Audio berhasil diupdate', 'success');
+      } else {
+        await addAudio({ ...form, audioUrl });
+        showToast('Audio berhasil disimpan', 'success');
+      }
+      
+      setShowForm(false); 
+      setEditingId(null);
+      setForm({ title: '', artist: '', coverUrl: '', order: audios.length }); 
+      setUrlInput('');
       await loadAudios();
-      showToast('Audio berhasil disimpan', 'success');
     } catch (err) { console.error(err); showToast('Gagal menyimpan', 'error'); }
     setSaving(false);
+  };
+
+  const handleEdit = (audio) => {
+    setEditingId(audio.id);
+    setForm({ title: audio.title, artist: audio.artist || '', coverUrl: audio.coverUrl || '', order: audio.order || 0 });
+    
+    let url = audio.audioUrl || '';
+    if (url.includes('drive.google.com/uc?export=download&id=')) {
+      const idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (idMatch) url = `https://drive.google.com/file/d/${idMatch[1]}/view`;
+    }
+    setUrlInput(url);
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -111,7 +134,7 @@ export default function AdminAudioPage() {
               Inject Contoh
             </button>
           )}
-          <button className="btn-primary" onClick={() => setShowForm(true)} style={{ fontSize: 13, height: 36, padding: '8px 14px' }}><Plus size={14} /> Tambah Audio</button>
+          <button className="btn-primary" onClick={() => { setEditingId(null); setForm({ title: '', artist: '', coverUrl: '', order: audios.length }); setUrlInput(''); setShowForm(true); }} style={{ fontSize: 13, height: 36, padding: '8px 14px' }}><Plus size={14} /> Tambah Audio</button>
         </div>
       </div>
 
@@ -128,6 +151,7 @@ export default function AdminAudioPage() {
                 <Music size={18} color="var(--primary)" />
               </div>
               <div style={{ flex: 1 }}><div className="title-sm">{audio.title}</div>{audio.artist && <div className="caption" style={{ color: 'var(--muted-soft)' }}>{audio.artist}</div>}</div>
+              <button className="btn-icon" onClick={() => handleEdit(audio)} style={{ width: 32, height: 32, color: 'var(--primary)' }}><Edit2 size={14} /></button>
               <button className="btn-icon" onClick={() => handleDelete(audio.id)} style={{ width: 32, height: 32, color: 'var(--error)' }}><Trash2 size={14} /></button>
             </div>
           ))
@@ -143,7 +167,7 @@ export default function AdminAudioPage() {
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
               style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-xl)', width: '100%', maxWidth: 440 }}>
-              <h3 className="title-lg" style={{ marginBottom: 20 }}>Tambah Audio</h3>
+              <h3 className="title-lg" style={{ marginBottom: 20 }}>{editingId ? 'Edit Audio' : 'Tambah Audio'}</h3>
               <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: 16 }}>
                   <label className="body-sm" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Judul</label>
@@ -179,7 +203,7 @@ export default function AdminAudioPage() {
                 </div>
                 
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="button" className="btn-secondary" onClick={() => setShowForm(false)} disabled={saving} style={{ flex: 1, justifyContent: 'center' }}>Batal</button>
+                  <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditingId(null); setForm({ title: '', artist: '', coverUrl: '', order: audios.length }); setUrlInput(''); }} disabled={saving} style={{ flex: 1, justifyContent: 'center' }}>Batal</button>
                   <button type="submit" className="btn-primary" disabled={saving || !urlInput} style={{ flex: 1, justifyContent: 'center' }}><Save size={14} />{saving ? 'Menyimpan...' : 'Simpan'}</button>
                 </div>
               </form>
