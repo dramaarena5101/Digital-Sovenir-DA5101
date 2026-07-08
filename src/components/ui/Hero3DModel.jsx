@@ -30,7 +30,7 @@ const SECTION_CONFIGS = {
   inline: { pos: [0, 0, 0], rot: [0.2, 0, 0], scale: 2.5, spread: 0 }, // For inline usage like Activation page
 };
 
-function Model({ url, scatterIdle, inline, animateOnMount }) {
+function Model({ url, scatterIdle, inline, animateOnMount, hideSparkles, modelPosition, modelScale }) {
   const { scene } = useGLTF(url);
   const groupRef = useRef();
   
@@ -248,22 +248,25 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
     // Resolve section config (if inline, prefer currentSection if explicit, else fallback to inline)
     const targetConfig = (inline && currentSection) ? (SECTION_CONFIGS[currentSection] || SECTION_CONFIGS.inline) : (SECTION_CONFIGS[currentSection] || SECTION_CONFIGS.hero);
     
+    const finalPos = modelPosition || targetConfig.pos;
+    const finalScale = modelScale || targetConfig.scale;
+
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     // Shift up and slightly left on mobile inline (login page) to visually center above the bottom sheet
-    const mobileYOffset = (isMobile && inline) ? 0.5 : 0; 
-    const mobileXOffset = (isMobile && inline) ? -0.2 : 0;
+    const mobileYOffset = (isMobile && inline && !modelPosition) ? 0.5 : 0; 
+    const mobileXOffset = (isMobile && inline && !modelPosition) ? -0.2 : 0;
     
     const dt = 1.0 - Math.exp(-8 * delta); // Frame-independent lerp factor (faster for snappier feel)
-    groupRef.current.position.x += (targetConfig.pos[0] + mobileXOffset - groupRef.current.position.x) * dt;
-    groupRef.current.position.y += (targetConfig.pos[1] + mobileYOffset - groupRef.current.position.y) * dt;
-    groupRef.current.position.z += (targetConfig.pos[2] - groupRef.current.position.z) * dt;
+    groupRef.current.position.x += (finalPos[0] + mobileXOffset - groupRef.current.position.x) * dt;
+    groupRef.current.position.y += (finalPos[1] + mobileYOffset - groupRef.current.position.y) * dt;
+    groupRef.current.position.z += (finalPos[2] - groupRef.current.position.z) * dt;
     
     groupRef.current.rotation.x += (targetConfig.rot[0] - groupRef.current.rotation.x) * dt;
     groupRef.current.rotation.y += (targetConfig.rot[1] - groupRef.current.rotation.y) * dt;
     groupRef.current.rotation.z += (targetConfig.rot[2] - groupRef.current.rotation.z) * dt;
     
     const cs = groupRef.current.scale.x;
-    const ns = cs + (targetConfig.scale - cs) * dt;
+    const ns = cs + (finalScale - cs) * dt;
     groupRef.current.scale.set(ns, ns, ns);
 
     // 2. MOUSE PARALLAX & IDLE BREATHING (Mesh level)
@@ -361,8 +364,12 @@ function Model({ url, scatterIdle, inline, animateOnMount }) {
           }}
         />
         {/* Fire Particles (Floating Embers) */}
-        <Sparkles count={250} scale={10} size={2.5} speed={0.6} opacity={0.5} color="#FF6B00" />
-        <Sparkles count={150} scale={12} size={1.5} speed={0.4} opacity={0.3} color="#FFD166" />
+        {!hideSparkles && (
+          <>
+            <Sparkles count={250} scale={10} size={2.5} speed={0.6} opacity={0.5} color="#FF6B00" />
+            <Sparkles count={150} scale={12} size={1.5} speed={0.4} opacity={0.3} color="#FFD166" />
+          </>
+        )}
       </group>
     </PresentationControls>
   );
@@ -398,7 +405,7 @@ function MouseCameraParallax({ inline }) {
   return null;
 }
 
-export default function Hero3DModel({ forceVisible, scatterIdle = false, inline = false, animateOnMount = false, touchAction = 'auto', pointerEvents = 'none' }) {
+export default function Hero3DModel({ forceVisible, scatterIdle = false, inline = false, animateOnMount = false, hideSparkles = false, touchAction = 'auto', pointerEvents = 'none', modelPosition, modelScale }) {
   const introCompleted = use3DStore((state) => state.introCompleted);
   const isVisible = forceVisible || introCompleted || animateOnMount;
 
@@ -435,7 +442,7 @@ export default function Hero3DModel({ forceVisible, scatterIdle = false, inline 
         {/* Central pulsing light (Statistics/Activation feature) */}
         <pointLight position={[0, 0, 0]} color="#FF7A00" intensity={20} distance={5} />
 
-        <Model url="/models/da-5101.glb" scatterIdle={scatterIdle} inline={inline} animateOnMount={animateOnMount} />
+        <Model url="/models/da-5101.glb" scatterIdle={scatterIdle} inline={inline} animateOnMount={animateOnMount} hideSparkles={hideSparkles} modelPosition={modelPosition} modelScale={modelScale} />
         
         <Preload all />
       </Canvas>

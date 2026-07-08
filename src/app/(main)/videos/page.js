@@ -6,6 +6,7 @@ import { getVideoEmbedUrl, getVideoThumbnailUrl } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X, Info, ChevronLeft, ChevronRight, Film, Search } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useRouter } from 'next/navigation';
 
 const VideoRow = ({ title, videos, onSelect, isPortrait = false, showProgress = false }) => {
   const rowRef = useRef(null);
@@ -86,6 +87,7 @@ const VideoRow = ({ title, videos, onSelect, isPortrait = false, showProgress = 
 export default function VideosPage() {
   const { settings } = useSettings();
   const settingCategories = settings?.videoCategories || [];
+  const router = useRouter();
 
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -357,17 +359,33 @@ export default function VideosPage() {
               backgroundColor: 'rgba(0,0,0,0.95)',
               zIndex: 9999,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '24px',
+              padding: '24px'
             }}
             onClick={() => setSelectedVideo(null)}
           >
+            <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 1010 }}>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                style={{
+                  background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.2)',
+                  color: 'white', cursor: 'pointer', padding: 12,
+                  borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backdropFilter: 'blur(8px)', transition: 'background 0.2s, transform 0.2s'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'; e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 25 }}
               style={{
-                width: '100%', maxWidth: 1000,
+                width: '100%', maxWidth: 'min(1000px, 120vh)', maxHeight: '90vh',
                 backgroundColor: '#111',
                 borderRadius: 12,
                 overflow: 'hidden',
@@ -376,59 +394,48 @@ export default function VideosPage() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
-              <div style={{
-                position: 'absolute', top: 24, right: 24, zIndex: 10
-              }}>
-                <button
-                  onClick={() => setSelectedVideo(null)}
-                  style={{
-                    background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.2)',
-                    color: 'white', cursor: 'pointer', padding: 12,
-                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    backdropFilter: 'blur(8px)', transition: 'background 0.2s, transform 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'; e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <X size={24} />
-                </button>
-              </div>
+              {/* Removed internal close button */}
 
-              {/* Video iframe */}
-              <div style={{ position: 'relative', paddingTop: '56.25%', backgroundColor: '#000' }}>
-                <iframe
-                  src={getVideoEmbedUrl(selectedVideo.videoUrl)}
-                  style={{
-                    position: 'absolute', inset: 0,
-                    width: '100%', height: '100%',
-                    border: 'none',
-                  }}
-                  sandbox="allow-scripts allow-same-origin allow-presentation"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+              {/* Video Thumbnail & Play Button */}
+              <div 
+                style={{ position: 'relative', paddingTop: '56.25%', backgroundColor: '#000', cursor: 'pointer' }}
+                onClick={() => router.push(`/watch/${selectedVideo.id}`)}
+              >
+                {(selectedVideo.thumbnailUrl || getVideoThumbnailUrl(selectedVideo.videoUrl)) && (
+                  <img 
+                    src={selectedVideo.thumbnailUrl || getVideoThumbnailUrl(selectedVideo.videoUrl)} 
+                    alt={selectedVideo.title} 
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} 
+                  />
+                )}
                 
-                {selectedVideo.videoUrl?.includes('drive.google.com') && (
-                  <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', zIndex: 10, cursor: 'default' }} title=" " />
-                )}
-                {(selectedVideo.videoUrl?.includes('youtube') || selectedVideo.videoUrl?.includes('youtu.be')) && (
-                  <>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60px', zIndex: 10, cursor: 'default' }} title=" " />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '120px', height: '65px', zIndex: 10, cursor: 'default' }} title=" " />
-                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: '250px', height: '65px', zIndex: 10, cursor: 'default' }} title=" " />
-                  </>
-                )}
+                {/* Play Button Overlay */}
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: 'rgba(255, 107, 0, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', boxShadow: '0 8px 32px rgba(255,107,0,0.5)', transition: 'transform 0.2s', ':hover': { transform: 'scale(1.1)' } }}>
+                    <Play size={40} color="white" fill="white" style={{ marginLeft: 6 }} />
+                  </div>
+                </div>
               </div>
 
               {/* Player Details */}
               <div style={{ padding: '32px', background: 'linear-gradient(to bottom, #111 0%, #0A0810 100%)' }}>
-                <h2 style={{ fontFamily: 'var(--font-bebas)', fontSize: '2.5rem', letterSpacing: '0.02em', color: 'white', marginBottom: 8 }}>{selectedVideo.title}</h2>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, fontSize: 13, color: '#A0A0A0', fontWeight: 600 }}>
-                  <span style={{ color: '#10b981' }}>98% Cocok</span>
-                  <span style={{ border: '1px solid rgba(255,255,255,0.4)', padding: '2px 6px', borderRadius: 4 }}>2025</span>
-                  <span style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 4 }}>HD</span>
-                  <span style={{ textTransform: 'capitalize' }}>{selectedVideo.category || 'Video'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h2 style={{ fontFamily: 'var(--font-bebas)', fontSize: '2.5rem', letterSpacing: '0.02em', color: 'white', marginBottom: 8 }}>{selectedVideo.title}</h2>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, fontSize: 13, color: '#A0A0A0', fontWeight: 600 }}>
+                      <span style={{ color: '#10b981' }}>98% Cocok</span>
+                      <span style={{ border: '1px solid rgba(255,255,255,0.4)', padding: '2px 6px', borderRadius: 4 }}>2025</span>
+                      <span style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 4 }}>HD</span>
+                      <span style={{ textTransform: 'capitalize' }}>{selectedVideo.category || 'Video'}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => router.push(`/watch/${selectedVideo.id}`)}
+                    className="btn-primary"
+                    style={{ padding: '12px 32px', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(255,107,0,0.4)' }}
+                  >
+                    <Play size={20} fill="currentColor" /> Play
+                  </button>
                 </div>
                 {selectedVideo.description && (
                   <p style={{ color: '#E0E0E0', fontSize: 15, lineHeight: 1.6, maxWidth: 800 }}>

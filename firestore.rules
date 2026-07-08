@@ -71,5 +71,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if isActivated();
+      allow create: if isActivated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isActivated(); // Needed so users can toggle likes on other people's comments
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
   }
 }

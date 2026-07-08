@@ -273,3 +273,49 @@ export async function getUsers() {
 export async function deleteUser(id) {
   return deleteDoc(doc(db, 'users', id));
 }
+
+// =====================
+// COMMENTS
+// =====================
+
+export async function getComments(videoId) {
+  const q = query(collection(db, 'comments'), where('videoId', '==', videoId));
+  const snap = await getDocs(q);
+  const comments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  // Sort locally to avoid requiring composite index on videoId + createdAt
+  return comments.sort((a, b) => {
+    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return timeB - timeA;
+  });
+}
+
+export async function addComment(videoId, user, text, parentId = null) {
+  return addDoc(collection(db, 'comments'), {
+    videoId,
+    userId: user.uid,
+    userName: user.displayName || 'User',
+    userPhoto: user.photoURL || null,
+    text,
+    parentId, // if null, it's a top-level comment
+    likes: [],
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function deleteComment(id) {
+  return deleteDoc(doc(db, 'comments', id));
+}
+
+export async function toggleLikeComment(commentId, userId) {
+  const docRef = doc(db, 'comments', commentId);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  const likes = data.likes || [];
+  if (likes.includes(userId)) {
+    return updateDoc(docRef, { likes: likes.filter(id => id !== userId) });
+  } else {
+    return updateDoc(docRef, { likes: [...likes, userId] });
+  }
+}

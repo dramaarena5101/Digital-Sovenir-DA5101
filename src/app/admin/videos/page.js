@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getVideos, addVideo, updateVideo, deleteVideo } from '@/lib/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Plus, Edit, Trash2, X, Save, Search } from 'lucide-react';
+import { Video, Plus, Edit, Trash2, X, Save, Search, Play } from 'lucide-react';
+import { getVideoEmbedUrl, getVideoThumbnailUrl } from '@/lib/utils';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useDialog } from '@/contexts/DialogContext';
 
@@ -24,6 +25,7 @@ export default function AdminVideosPage() {
   const [bulkCategory, setBulkCategory] = useState('');
   const [bulkMode, setBulkMode] = useState('append');
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', isDanger: false, onConfirm: null });
+  const [selectedVideo, setSelectedVideo] = useState(null);
 
   useEffect(() => { loadVideos(); }, []);
 
@@ -278,8 +280,27 @@ export default function AdminVideosPage() {
                 backgroundColor: selectedIds.includes(video.id) ? 'rgba(255,107,0,0.05)' : 'transparent'
               }}>
                 <input type="checkbox" checked={selectedIds.includes(video.id)} onChange={() => handleSelectRow(video.id)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                <div style={{ width: 80, height: 45, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--surface-dark)', flexShrink: 0, overflow: 'hidden' }}>
-                  {video.thumbnailUrl && <img src={video.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                <div 
+                  onClick={() => setSelectedVideo(video)}
+                  title="Tonton Video"
+                  style={{ 
+                    width: 80, height: 45, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--surface-dark)', 
+                    flexShrink: 0, overflow: 'hidden', position: 'relative', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  {(video.thumbnailUrl || getVideoThumbnailUrl(video.videoUrl)) ? (
+                    <img src={video.thumbnailUrl || getVideoThumbnailUrl(video.videoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <Video size={16} color="var(--muted-soft)" />
+                  )}
+                  <div 
+                    style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                  >
+                    <Play size={16} fill="white" color="white" />
+                  </div>
                 </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="title-sm" style={{ marginBottom: 2 }}>{video.title}</div>
@@ -398,13 +419,76 @@ export default function AdminVideosPage() {
                 <h3 className="title-lg">{confirmDialog.title}</h3>
                 <p className="body-md" style={{ color: 'var(--muted)', marginTop: 8 }}>{confirmDialog.message}</p>
               </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                <button type="button" className="btn-secondary" onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} style={{ flex: 1, justifyContent: 'center' }}>
-                  Batal
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn-secondary" onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} style={{ flex: 1, justifyContent: 'center' }}>Batal</button>
+                <button className={confirmDialog.isDanger ? 'btn-primary' : 'btn-secondary'} 
+                  style={confirmDialog.isDanger ? { flex: 1, justifyContent: 'center', backgroundColor: 'var(--error)' } : { flex: 1, justifyContent: 'center' }}
+                  onClick={() => { confirmDialog.onConfirm(); setConfirmDialog({ ...confirmDialog, isOpen: false }); }}>
+                  Ya, Lanjutkan
                 </button>
-                <button type="button" className="btn-primary" onClick={confirmDialog.onConfirm} disabled={saving} style={{ flex: 1, justifyContent: 'center', backgroundColor: confirmDialog.isDanger ? 'var(--error)' : 'var(--primary)' }}>
-                  {saving ? 'Memproses...' : (confirmDialog.isDanger ? 'Ya, Hapus' : 'Ya, Lanjutkan')}
-                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video Modal for Viewing */}
+      <AnimatePresence>
+        {selectedVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1000,
+              backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+            }}
+            onClick={() => setSelectedVideo(null)}
+          >
+            <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 1010 }}>
+              <button onClick={() => setSelectedVideo(null)} style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', padding: 12, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', transition: 'background 0.2s, transform 0.2s' }}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <motion.div
+              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              style={{
+                width: '100%', maxWidth: 'min(1000px, 120vh)', maxHeight: '90vh',
+                backgroundColor: '#141414', borderRadius: 16, overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                display: 'flex', flexDirection: 'column', position: 'relative'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Removed internal close button */}
+
+              <div style={{ position: 'relative', paddingTop: '56.25%', backgroundColor: '#000' }}>
+                <iframe src={getVideoEmbedUrl(selectedVideo.videoUrl)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }} sandbox="allow-scripts allow-same-origin allow-presentation" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                {selectedVideo.videoUrl?.includes('drive.google.com') && ( <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', zIndex: 10, cursor: 'default' }} title=" " /> )}
+                {(selectedVideo.videoUrl?.includes('youtube') || selectedVideo.videoUrl?.includes('youtu.be')) && (
+                  <>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60px', zIndex: 10, cursor: 'default' }} title=" " />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '120px', height: '65px', zIndex: 10, cursor: 'default' }} title=" " />
+                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: '250px', height: '65px', zIndex: 10, cursor: 'default' }} title=" " />
+                  </>
+                )}
+              </div>
+
+              <div style={{ padding: '32px', background: 'linear-gradient(to bottom, #111 0%, #0A0810 100%)' }}>
+                <h2 style={{ fontFamily: 'var(--font-bebas)', fontSize: '2.5rem', letterSpacing: '0.02em', color: 'white', marginBottom: 8 }}>{selectedVideo.title}</h2>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, fontSize: 13, color: '#A0A0A0', fontWeight: 600 }}>
+                  <span style={{ color: '#10b981' }}>Video Admin</span>
+                  <span style={{ textTransform: 'capitalize' }}>{selectedVideo.category || 'Tidak ada kategori'}</span>
+                </div>
+                {selectedVideo.description && (
+                  <p style={{ color: '#E0E0E0', fontSize: 15, lineHeight: 1.6, maxWidth: 800 }}>{selectedVideo.description}</p>
+                )}
               </div>
             </motion.div>
           </motion.div>
