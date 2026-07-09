@@ -121,7 +121,8 @@ export default function ActivatePage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100dvh',
+      overflow: 'hidden',
       backgroundColor: 'transparent',
       display: 'flex',
       flexDirection: 'column',
@@ -130,24 +131,14 @@ export default function ActivatePage() {
       padding: 'var(--space-lg)',
       position: 'relative'
     }}>
+      {/* Fullscreen 3D Background */}
+      <Hero3DModel forceVisible={true} inline={false} animateOnMount={true} modelPosition={[0, 2.8, 0]} modelScale={0.55} />
+
       {/* UI Wrapper to stay above 3D */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Logo */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: 48, textAlign: 'center' }}
-      >
-        <div style={{
-          width: 200, height: 200,
-          margin: '0 auto 16px',
-        }}>
-          <Hero3DModel forceVisible={true} inline={true} animateOnMount={true} />
-        </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--ink)', letterSpacing: '-0.3px' }}>
-          Drama Arena <span style={{ color: 'var(--primary)' }}>5101</span>
-        </h1>
-      </motion.div>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+      
+      {/* Spacer for 3D Logo */}
+      <div style={{ height: 'min(35vh, 240px)' }} />
 
       <AnimatePresence mode="wait">
         {success ? (
@@ -161,6 +152,7 @@ export default function ActivatePage() {
             style={{
               textAlign: 'center',
               maxWidth: 440,
+              pointerEvents: 'auto',
             }}
           >
             <div style={{
@@ -193,6 +185,7 @@ export default function ActivatePage() {
             style={{
               width: '100%',
               maxWidth: 480,
+              pointerEvents: 'auto',
             }}
           >
             <div className="card" style={{ padding: 'var(--space-xl)' }}>
