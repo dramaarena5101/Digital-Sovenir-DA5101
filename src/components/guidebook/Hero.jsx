@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { eventInfo } from "@/lib/guidebookContent";
 import RetroGrid from "./MagicUI/RetroGrid";
 
-export default function Hero() {
+export default function Hero({ handleCTA }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const logoY = useTransform(scrollYProgress, [0, 1], [0, -60]);
@@ -93,11 +93,11 @@ export default function Hero() {
           {/* CTAs */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1 }}
             style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
-            <a href="#performances" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "0.9rem 2.25rem", borderRadius: 999, background: "#FF6B00", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", textDecoration: "none", boxShadow: "0 8px 24px rgba(255,107,0,0.3)" }}
+            <button onClick={handleCTA} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "0.9rem 2.25rem", borderRadius: 999, background: "#FF6B00", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", border: "none", cursor: "pointer", boxShadow: "0 8px 24px rgba(255,107,0,0.3)" }}
               onMouseEnter={e => { e.currentTarget.style.background = "#111827"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "#FF6B00"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(255,107,0,0.3)"; e.currentTarget.style.transform = "none"; }}>
               Lihat Penampilan →
-            </a>
+            </button>
             <a href="#about" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "0.9rem 2.25rem", borderRadius: 999, background: "transparent", color: "#374151", fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", textDecoration: "none", border: "1.5px solid #E5E7EB" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#FF6B00"; e.currentTarget.style.color = "#FF6B00"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#E5E7EB"; e.currentTarget.style.color = "#374151"; }}>

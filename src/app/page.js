@@ -15,8 +15,12 @@ import GuidebookTheme from '@/components/themes/GuidebookTheme';
 export default function LandingPage() {
   const router = useRouter();
   const { user, isActivated } = useAuth();
-  const { settings } = useSettings();
+  const { settings, loading } = useSettings();
   const logoSrc = settings?.logoUrl || null;
+
+  if (loading) {
+    return <div style={{ minHeight: '100vh', backgroundColor: '#0A0810' }} />;
+  }
 
   const features = [
     {

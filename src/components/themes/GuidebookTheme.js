@@ -74,7 +74,7 @@ export default function GuidebookTheme({
         <div style={{ position: "relative", zIndex: 10 }}>
           <Navbar onReplayIntro={handleReplayIntro} />
           
-          <SectionWatcher name="hero"><Hero /></SectionWatcher>
+          <SectionWatcher name="hero"><Hero handleCTA={handleCTA} /></SectionWatcher>
           <Ticker />
           
           <SectionWatcher name="about"><About /></SectionWatcher>
