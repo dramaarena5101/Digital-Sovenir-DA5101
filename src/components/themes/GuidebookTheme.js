@@ -65,7 +65,7 @@ export default function GuidebookTheme({
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "transparent", color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: "transparent", color: "#111827", fontFamily: "var(--font-body)", position: "relative" }}>
       {/* 3D Background */}
       {loaded && <Hero3DModel animateOnMount={true} />}
       

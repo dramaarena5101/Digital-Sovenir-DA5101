@@ -30,42 +30,43 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isOwner(userId) || isAdmin();
+      
+      allow update: if isAdmin() || (isOwner(userId) && (
+        (
+          // Normal profile update: explicitly block changing role and activated status
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'activated'])
+        ) || (
+          // Activation update: strictly require linking to a valid used code
+          request.resource.data.activated == true &&
+          resource.data.activated == false &&
+          request.resource.data.role == resource.data.role &&
+          get(/databases/$(database)/documents/activation_codes/$(request.resource.data.activationCode)).data.usedBy == request.auth.uid
+        )
+      ));
     }
     
     // Activation codes
     match /activation_codes/{codeId} {
-      allow read: if isAuth();
-      allow update: if isAuth(); // Users can update code status during activation
+      // Users can only fetch a specific code to check it, preventing reading the whole collection
+      allow get: if isAuth(); 
+      allow list: if isAdmin();
+      
+      allow update: if isAuth() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'usedBy', 'usedDate']) &&
+        resource.data.status == 'unused' &&
+        request.resource.data.status == 'used' &&
+        request.resource.data.usedBy == request.auth.uid;
+        
       allow create, delete: if isAdmin();
     }
     
     // Content collections - read requires activation, write requires admin
-    match /videos/{docId} {
-      allow read: if isActivated();
-      allow write: if isAdmin();
-    }
-    
-    match /photos/{docId} {
-      allow read: if isActivated();
-      allow write: if isAdmin();
-    }
-    
-    match /audios/{docId} {
-      allow read: if isActivated();
-      allow write: if isAdmin();
-    }
-    
-    match /documents/{docId} {
-      allow read: if isActivated();
-      allow write: if isAdmin();
-    }
-    
-    match /rewards/{docId} {
-      allow read: if isActivated();
-      allow write: if isAdmin();
-    }
+    match /videos/{docId} { allow read: if isActivated(); allow write: if isAdmin(); }
+    match /photos/{docId} { allow read: if isActivated(); allow write: if isAdmin(); }
+    match /audios/{docId} { allow read: if isActivated(); allow write: if isAdmin(); }
+    match /documents/{docId} { allow read: if isActivated(); allow write: if isAdmin(); }
+    match /rewards/{docId} { allow read: if isActivated(); allow write: if isAdmin(); }
     
     match /settings/{document=**} {
       allow read: if true;
@@ -76,8 +77,18 @@ service cloud.firestore {
     match /comments/{commentId} {
       allow read: if isActivated();
       allow create: if isActivated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isActivated(); // Needed so users can toggle likes on other people's comments
       allow delete: if isAdmin() || isOwner(resource.data.userId);
+      
+      allow update: if isActivated() && (
+        (
+          // Any activated user can toggle likes
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        ) || (
+          // Only the owner can edit their own comment text
+          isOwner(resource.data.userId) &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId', 'videoId', 'parentId', 'createdAt'])
+        )
+      );
     }
   }
 }

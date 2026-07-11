@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getVideos, getPhotos } from '@/lib/firestore';
+import { getVideos, getResolvedPhotos as getPhotos } from '@/lib/firestore';
 import { getVideoEmbedUrl, getVideoThumbnailUrl } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Play, X, Film, Camera } from 'lucide-react';

@@ -325,10 +325,18 @@ export default function SoundtrackPage() {
         onError={(e) => {
           console.warn('Player Error:', e);
         }}
-        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-        width="1px"
-        height="1px"
+        style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
+        width="300px"
+        height="300px"
         playsinline={true}
+        config={{
+          youtube: {
+            playerVars: { 
+              origin: typeof window !== 'undefined' ? window.location.origin : '',
+              autoplay: 1
+            }
+          }
+        }}
       />
 
       {/* Main Content Area */}
@@ -616,16 +624,20 @@ export default function SoundtrackPage() {
             </div>
 
             {/* Right: Volume */}
-            <div className="st-player-right">
+            <div className="st-player-right" style={{ userSelect: 'none' }}>
               <button onClick={toggleMute} style={{ background: 'none', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}>
                 {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
-              <div style={{ width: 80, height: 12, display: 'flex', alignItems: 'center' }} className="progress-bar-container">
+              <div style={{ width: 80, height: 12, display: 'flex', alignItems: 'center', cursor: 'pointer' }} className="progress-bar-container">
                 <input 
                   type="range" min="0" max="1" step="0.01" 
                   value={isMuted ? 0 : volume} 
                   onChange={handleVolumeChange} 
-                  style={{ width: '100%', height: 4, appearance: 'none', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, outline: 'none' }}
+                  style={{ 
+                    width: '100%', height: 4, appearance: 'none', 
+                    background: `linear-gradient(to right, white ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.1) ${(isMuted ? 0 : volume) * 100}%)`, 
+                    borderRadius: 2, outline: 'none', cursor: 'pointer' 
+                  }}
                 />
               </div>
             </div>

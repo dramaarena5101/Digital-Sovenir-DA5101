@@ -429,13 +429,7 @@ export default function VideosPage() {
                       <span style={{ textTransform: 'capitalize' }}>{selectedVideo.category || 'Video'}</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => router.push(`/watch/${selectedVideo.id}`)}
-                    className="btn-primary"
-                    style={{ padding: '12px 32px', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(255,107,0,0.4)' }}
-                  >
-                    <Play size={20} fill="currentColor" /> Play
-                  </button>
+
                 </div>
                 {selectedVideo.description && (
                   <p style={{ color: '#E0E0E0', fontSize: 15, lineHeight: 1.6, maxWidth: 800 }}>

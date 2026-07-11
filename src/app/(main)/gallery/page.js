@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getPhotos } from '@/lib/firestore';
+import { getResolvedPhotos as getPhotos } from '@/lib/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, ImageIcon, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getPhotos, addPhoto, deletePhoto } from '@/lib/firestore';
 import { uploadImage } from '@/lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image as ImageIcon, Plus, Trash2, X, Upload, Save, Search, AlertTriangle } from 'lucide-react';
+import { Image as ImageIcon, Plus, Trash2, X, Upload, Save, Search, AlertTriangle, Folder } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useDialog } from '@/contexts/DialogContext';
 
@@ -54,39 +54,11 @@ export default function AdminPhotosPage() {
           const folderMatch = imageUrl.match(/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9_-]+)/);
           
           if (folderMatch) {
-            // It's a folder link
-            if (!settings?.googleDriveApiKey) {
-              showToast("API Key Google Drive belum diatur di menu Settings!", 'error');
-              continue;
-            }
+            // It's a folder link. Instead of fetching all photos, we just save the folder reference!
+            processedCount++;
+            setUploadProgress(Math.min(100, Math.round((processedCount / totalFilesToProcess) * 100)));
             const folderId = folderMatch[1];
-            try {
-              const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${settings.googleDriveApiKey}&fields=files(id,name,thumbnailLink)&pageSize=100`);
-              const data = await response.json();
-              if (data.error) {
-                 showToast("Gagal membaca folder: " + data.error.message, 'error');
-                 continue;
-              }
-              const driveFiles = data.files || [];
-              if (driveFiles.length === 0) {
-                 showToast("Folder kosong atau tidak berisi gambar.", 'error');
-                 continue;
-              }
-              totalFilesToProcess += driveFiles.length - 1; // Adjust total length
-              
-              for (const file of driveFiles) {
-                processedCount++;
-                setUploadProgress(Math.min(100, Math.round((processedCount / totalFilesToProcess) * 100)));
-                
-                // Gunakan endpoint thumbnail dinamis (tidak akan expired seperti thumbnailLink API)
-                let thumbUrl = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
-                
-                await addPhoto({ title: file.name.split('.')[0] || 'Foto', imageUrl: thumbUrl, category });
-              }
-            } catch(err) {
-              console.error(err);
-              showToast("Gagal menghubungi Google Drive API.", 'error');
-            }
+            await addPhoto({ title: `Folder Drive ${folderId.substring(0,6)}...`, type: 'folder', folderId, category });
           } else {
             // Regular link
             processedCount++;
@@ -95,7 +67,7 @@ export default function AdminPhotosPage() {
             if (driveMatch) {
               imageUrl = `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1200`;
             }
-            await addPhoto({ title: `Foto_${Date.now()}_${i}`, imageUrl, category });
+            await addPhoto({ title: `Foto_${Date.now()}_${i}`, type: 'image', imageUrl, category });
           }
         }
         setShowForm(false); setUrlInput('');
@@ -199,7 +171,14 @@ export default function AdminPhotosPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
           {filteredPhotos.map((photo) => (
             <div key={photo.id} style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', paddingTop: '100%', backgroundColor: 'var(--surface-card)' }}>
-              <img src={photo.imageUrl} alt={photo.title || ''} referrerPolicy="no-referrer" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              {photo.type === 'folder' ? (
+                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', flexDirection: 'column' }}>
+                   <Folder size={48} color="#64748b" />
+                   <span style={{ fontSize: 12, marginTop: 8, color: '#475569', fontWeight: 500 }}>Folder Drive</span>
+                 </div>
+              ) : (
+                 <img src={photo.imageUrl} alt={photo.title || ''} referrerPolicy="no-referrer" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
               <button onClick={() => handleDelete(photo.id)} style={{
                 position: 'absolute', top: 6, right: 6, width: 28, height: 28, borderRadius: '50%',
                 backgroundColor: 'rgba(198,69,69,0.9)', border: 'none', color: 'white', cursor: 'pointer',

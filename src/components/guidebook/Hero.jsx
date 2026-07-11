@@ -60,7 +60,7 @@ export default function Hero({ handleCTA }) {
           <motion.h1
             initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.35 }}
-            style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "0.05em", color: "#111827", lineHeight: 0.9, marginBottom: "1rem", fontSize: "clamp(60px, 12vw, 150px)" }}
+            style={{ fontFamily: "var(--font-wondra)", letterSpacing: "0.05em", color: "#111827", lineHeight: 0.9, marginBottom: "1rem", fontSize: "clamp(60px, 12vw, 150px)" }}
           >
             DRAMA ARENA
           </motion.h1>
@@ -76,7 +76,7 @@ export default function Hero({ handleCTA }) {
           <motion.h2
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "0.35em", color: "#FF6B00", marginBottom: "1.5rem", fontSize: "clamp(20px, 4vw, 52px)" }}
+            style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "0.4em", color: "#FF6B00", marginBottom: "1.5rem", fontSize: "clamp(12px, 2vw, 18px)", fontWeight: 700, textTransform: "uppercase" }}
           >
             FIVE A HUNDRED ONE
           </motion.h2>
