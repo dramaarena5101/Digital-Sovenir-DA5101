@@ -9,7 +9,7 @@ export default function Hero({ handleCTA }) {
   const logoY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const logoScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.75]);
   const logoOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-  
+
   const textY = useTransform(scrollYProgress, [0, 0.6], [0, -80]); // Text moves up slightly as you scroll down
   const textOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]); // Text fades out faster than 3D model
 
@@ -35,12 +35,12 @@ export default function Hero({ handleCTA }) {
 
         {/* Wrap content for scroll-out animation */}
         <motion.div style={{ opacity: textOpacity, y: textY, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          
+
           {/* Badge */}
           <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "0.4rem 1.25rem", borderRadius: 999, border: "1.5px solid #FDDCBF", background: "#FFF0E6", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#FF6B00", marginBottom: "2.5rem" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#FF6B00", display: "block" }} />
-              Digital Guide Book · 2026
+              Digital Souvenir DA5101 · 2026
             </div>
           </motion.div>
 
@@ -104,7 +104,7 @@ export default function Hero({ handleCTA }) {
               Tentang Acara
             </a>
           </motion.div>
-          
+
         </motion.div>
       </div>
 

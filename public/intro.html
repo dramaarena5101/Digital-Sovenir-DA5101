@@ -509,6 +509,46 @@
 
 <body class="puzzle-mode">
 
+  <!-- ========================================== -->
+  <!-- 🎵 EDIT NAMA FILE AUDIO ANDA DI SINI 🎵 -->
+  <!-- ========================================== -->
+  
+  <!-- 1. welcome: Suara magis saat pertama kali masuk halaman web (loading selesai) -->
+  <audio id="custom-welcome-sfx" src="/welcome.mp3" preload="auto"></audio>
+
+  <!-- 2. intro-bgm: Musik latar (BGM) yang diputar berulang sejak awal -->
+  <audio id="custom-bgm" src="/intro-bgm.mp3" loop preload="auto"></audio>
+
+  <!-- 3. part-click: Suara klik khusus saat Anda menyentuh/menahan kepingan 3D -->
+  <audio id="custom-part-click-sfx" src="/part-click.mp3" preload="auto"></audio>
+
+  <!-- 4. hover (Opsional): Suara "Ting" atau sentuhan kecil saat mouse diarahkan ke kepingan 3D -->
+  <audio id="custom-hover-sfx" src="/hover.mp3" preload="auto"></audio>
+
+  <!-- 5. snap (Opsional): Suara "Klik/Thud" berat saat kepingan puzzle berhasil masuk ke tempat yang benar -->
+  <audio id="custom-snap-sfx" src="/snap.mp3" preload="auto"></audio>
+
+  <!-- 6. success: Suara kemenangan/berhasil saat SEMUA kepingan logo 100% tersusun -->
+  <audio id="custom-success-sfx" src="/success.mp3" preload="auto"></audio>
+
+  <!-- 7. intro-sfx: Suara saat logo 3D hancur/meledak (Awakening) -->
+  <audio id="custom-intro-sfx" src="/intro-sfx.mp3" preload="auto"></audio>
+  
+  <!-- 8. typewriter: Suara ketikan super cepat saat teks muncul dari bawah -->
+  <audio id="custom-typewriter-sfx" src="/typewriter.mp3" preload="auto"></audio>
+  
+  <!-- 9. click: Suara saat tombol "Buka Digital Souvenir" ditekan di akhir halaman -->
+  <audio id="custom-click-sfx" src="/click.mp3" preload="auto"></audio>
+  
+  <!-- 10. swoosh: Suara desiran angin saat scroll ke teks baru (logo bergeser jauh) -->
+  <audio id="custom-swoosh-sfx" src="/swoosh.mp3" preload="auto"></audio>
+
+  <!-- 11. charge: Suara energi/menahan kekuatan saat menekan & menahan bintang tengah -->
+  <audio id="custom-charge-sfx" src="/charge.mp3" preload="auto"></audio>
+
+  <!-- 12. transition: Suara desiran halus/magis saat layar memutih dan pindah ke halaman utama -->
+  <audio id="custom-transition-sfx" src="/transition.mp3" preload="auto"></audio>
+  <!-- ========================================== -->
   <div id="loader">
     <img src="logo-flat.png" alt="Lambang Drama Arena 5101">
     <div class="bar"><span id="loaderbar"></span></div>
@@ -925,14 +965,20 @@
           if (targetProgress > 0.95 && key === 'mid' && !isActivating && !isExploding) {
             isHoldingCenter = true;
             holdStartTime = Date.now();
-            Synth.playClick();
+            if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playClick();
+            
+            const chargeAudio = document.getElementById('custom-charge-sfx');
+            if (chargeAudio) { chargeAudio.currentTime = 0; chargeAudio.play().catch(()=>{}); }
+
             document.body.style.cursor = 'wait';
             return;
           }
           isDraggingPart = true;
           draggedKey = key;
           clickTime = Date.now();
-          Synth.playClick();
+          if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playClick();
+          const partClickAudio2 = document.getElementById('custom-part-click-sfx');
+          if (partClickAudio2) { partClickAudio2.currentTime = 0; partClickAudio2.play().catch(()=>{}); }
           dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()), intersects[0].point);
           raycaster.ray.intersectPlane(dragPlane, dragStartPoint);
           document.body.style.cursor = 'grabbing';
@@ -961,6 +1007,26 @@
       pointerTX = (e.clientX / innerWidth - 0.5) * 2;
       pointerTY = (e.clientY / innerHeight - 0.5) * 2;
 
+      // Hover check for sound effect
+      if (!isDraggingScene && !isDraggingPart && !isActivating && !isHoldingCenter) {
+        const ndcX = (e.clientX / innerWidth) * 2 - 1;
+        const ndcY = -(e.clientY / innerHeight) * 2 + 1;
+        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+        const intersects = raycaster.intersectObject(group, true);
+        const currentlyHovered = intersects.length > 0;
+        
+        if (currentlyHovered && !isHovered) {
+           const hoverAudio = document.getElementById('custom-hover-sfx');
+           if (hoverAudio) {
+              hoverAudio.currentTime = 0;
+              hoverAudio.volume = 0.2;
+              hoverAudio.play().catch(()=>{});
+           }
+        }
+        isHovered = currentlyHovered;
+        document.body.style.cursor = isHovered ? 'pointer' : 'default';
+      }
+
       if (isDraggingScene) {
         logoDragRotY += (e.clientX - dragStartX) * 0.005;
         dragStartX = e.clientX;
@@ -981,7 +1047,14 @@
             const currentOffset = PUZZLE_OFFSETS[draggedKey].clone().multiplyScalar(rt.ex).add(new THREE.Vector3(rt.targetDragX, rt.targetDragY, 0));
             if (currentOffset.length() < 1.0) {
               rt.isSnapped = true;
-              Synth.playClick();
+              if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playClick();
+              
+              const snapAudio = document.getElementById('custom-snap-sfx');
+              if (snapAudio) {
+                 snapAudio.currentTime = 0;
+                 snapAudio.volume = 0.8;
+                 snapAudio.play().catch(()=>{});
+              }
               rt.ex = 0; rt.targetDragX = 0; rt.targetDragY = 0;
               rt.tiltX = 0; rt.tiltY = 0; rt.spin = 0;
               isDraggingPart = false;
@@ -992,6 +1065,14 @@
                 isPuzzleActive = false;
                 document.body.classList.remove('puzzle-mode');
                 document.getElementById('puzzle-instruction').style.opacity = '0';
+                
+                const successAudio = document.getElementById('custom-success-sfx');
+                if (successAudio) {
+                   successAudio.currentTime = 0;
+                   successAudio.volume = 0.9;
+                   successAudio.play().catch(()=>{});
+                }
+
                 setTimeout(() => {
                   Synth.playAwakening();
                   introStart = clock.getElapsedTime();
@@ -1006,6 +1087,10 @@
     addEventListener("pointerup", (e) => {
       if (isHoldingCenter && !isExploding) {
         isHoldingCenter = false;
+        
+        const chargeAudio = document.getElementById('custom-charge-sfx');
+        if (chargeAudio) { chargeAudio.pause(); chargeAudio.currentTime = 0; }
+        
         document.body.style.cursor = 'default';
       }
       if (isDraggingPart && draggedKey) {
@@ -1024,6 +1109,10 @@
     addEventListener("pointerleave", (e) => {
       if (isHoldingCenter && !isExploding) {
         isHoldingCenter = false;
+        
+        const chargeAudio = document.getElementById('custom-charge-sfx');
+        if (chargeAudio) { chargeAudio.pause(); chargeAudio.currentTime = 0; }
+        
         document.body.style.cursor = 'default';
       }
     });
@@ -1093,6 +1182,14 @@
         document.body.classList.add('show-blueprint');
         isPuzzleActive = true;
         document.getElementById('puzzle-instruction').style.opacity = '1';
+        
+        const welcomeAudio = document.getElementById('custom-welcome-sfx');
+        if (welcomeAudio) {
+           welcomeAudio.currentTime = 0;
+           welcomeAudio.volume = 0.6;
+           welcomeAudio.play().catch(()=>{});
+        }
+        
         animate();
       }, 800);
     }
@@ -1184,6 +1281,14 @@
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting && !e.target.classList.contains("in-view")) {
+          // Play swoosh sound on scroll to new section
+          const swooshAudio = document.getElementById('custom-swoosh-sfx');
+          if (swooshAudio) {
+             swooshAudio.currentTime = 0;
+             swooshAudio.volume = 0.5;
+             swooshAudio.play().catch(()=>{});
+          }
+
           if (e.target.dataset.typed === "true") {
             // already fully typed, just show panel smoothly
             e.target.classList.add("in-view");
@@ -1199,7 +1304,16 @@
               return;
             }
             chars[i].style.opacity = '1';
-            if (i % 2 === 0) Synth.playTypewriter();
+            
+            if (i % 2 === 0) {
+               if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playTypewriter();
+               const typeAudio = document.getElementById('custom-typewriter-sfx');
+               if (typeAudio) {
+                  typeAudio.currentTime = 0;
+                  typeAudio.play().catch(()=>{});
+               }
+            }
+            
             i++;
             setTimeout(reveal, 10 + Math.random() * 15);
           }
@@ -1372,10 +1486,35 @@
             isExploding = true;
             isActivating = true;
             activationElapsed = 0;
-            Synth.playAwakening();
+            if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playAwakening();
+            
+            // Custom MP3 SFX
+            const customSfx = document.getElementById('custom-intro-sfx');
+            if (customSfx) {
+              customSfx.currentTime = 0;
+              customSfx.play().catch(e => console.log('SFX play failed', e));
+            }
+            
+            // Fade out BGM
+            const bgm = document.getElementById('custom-bgm');
+            if (bgm && !bgm.paused) {
+               let fadeOut = setInterval(() => {
+                  if (bgm.volume > 0.05) {
+                     bgm.volume -= 0.05;
+                  } else {
+                     bgm.pause();
+                     clearInterval(fadeOut);
+                  }
+               }, 100);
+            }
+
             document.getElementById('end-instruction').style.opacity = '0';
             document.body.style.transition = 'opacity 2s ease';
-            setTimeout(() => { document.body.style.opacity = '0'; }, 1000);
+            setTimeout(() => { 
+                document.body.style.opacity = '0'; 
+                const transitionAudio = document.getElementById('custom-transition-sfx');
+                if (transitionAudio) { transitionAudio.currentTime = 0; transitionAudio.play().catch(()=>{}); }
+            }, 1000);
             setTimeout(() => { window.parent.postMessage('FINISH_INTRO', '*'); }, 3000);
             // Blast particles!
             for (const k of PARTKEYS) {
@@ -1453,11 +1592,46 @@
     });
   </script>
 
-
     <script>
+      // BGM Autoplay on first interaction
+      let bgmStarted = false;
+      function tryStartBGM() {
+        if (bgmStarted) return;
+        const bgm = document.getElementById('custom-bgm');
+        if (bgm) {
+          bgm.volume = 0.4;
+          bgm.play().then(() => {
+            bgmStarted = true;
+            document.removeEventListener('pointerdown', tryStartBGM);
+            document.removeEventListener('keydown', tryStartBGM);
+          }).catch(() => {});
+        }
+      }
+      document.addEventListener('pointerdown', tryStartBGM);
+      document.addEventListener('keydown', tryStartBGM);
+
       document.getElementById('enter-guidebook-btn')?.addEventListener('click', () => {
           // Play click sound if possible
           if (typeof Synth !== 'undefined' && Synth.ctx) Synth.playClick();
+          
+          const customClick = document.getElementById('custom-click-sfx');
+          if (customClick) {
+            customClick.currentTime = 0;
+            customClick.play().catch(()=>{});
+          }
+
+          // Fade out BGM
+          const bgm = document.getElementById('custom-bgm');
+          if (bgm && !bgm.paused) {
+             let fadeOut = setInterval(() => {
+                if (bgm.volume > 0.05) {
+                   bgm.volume -= 0.05;
+                } else {
+                   bgm.pause();
+                   clearInterval(fadeOut);
+                }
+             }, 100);
+          }
           
           // Animate out
           document.body.style.transition = 'opacity 1s ease';
