@@ -22,11 +22,12 @@ const SECTION_CONFIGS = {
   hero: { pos: [0, 1.6, 0], rot: [0.15, 0, 0], scale: 1.0, spread: 0 },
   about: { pos: [2.5, 1, 0], rot: [0.2, -0.5, 0], scale: 4.0, spread: 0.3 },
   philosophy: { pos: [0, -0.2, 0], rot: [0, 0, 0], scale: 1.2, spread: 0 },
-  categories: { pos: [-3.0, 0.5, 0], rot: [-0.1, 0.5, 0], scale: 3.5, spread: 0.6 },
-  performances: { pos: [3.0, -0.5, 0], rot: [0.1, -0.6, 0.1], scale: 3.5, spread: 1.0 },
-  judges: { pos: [0, 2.0, 0], rot: [0.3, 0, 0], scale: 3.0, spread: 0.5 },
-  sponsors: { pos: [0, -1, 0], rot: [-0.2, 0, 0], scale: 2.5, spread: 0.2 },
-  footer: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 2.0, spread: 0 },
+  // Hide logo completely after philosophy
+  categories: { pos: [-3.0, 0.5, 0], rot: [-0.1, 0.5, 0], scale: 0, spread: 0.6 },
+  performances: { pos: [3.0, -0.5, 0], rot: [0.1, -0.6, 0.1], scale: 0, spread: 1.0 },
+  judges: { pos: [0, 2.0, 0], rot: [0.3, 0, 0], scale: 0, spread: 0.5 },
+  sponsors: { pos: [0, -1, 0], rot: [-0.2, 0, 0], scale: 0, spread: 0.2 },
+  footer: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0, spread: 0 },
   inline: { pos: [0, 0, 0], rot: [0.2, 0, 0], scale: 2.5, spread: 0 }, // For inline usage like Activation page
 };
 

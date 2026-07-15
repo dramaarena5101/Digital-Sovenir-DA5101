@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getRewards, addReward, updateReward, deleteReward } from '@/lib/firestore';
-import { uploadBadge } from '@/lib/storage';
-import { REWARD_TYPES } from '@/lib/utils';
+import { REWARD_TYPES, getDirectImageUrl } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, Plus, Edit, Trash2, X, Save, Upload } from 'lucide-react';
 import { useDialog } from '@/contexts/DialogContext';
@@ -14,17 +13,16 @@ export default function AdminRewardsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingReward, setEditingReward] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '', type: 'collector', active: true });
-  const [badgeFile, setBadgeFile] = useState(null);
+  const [form, setForm] = useState({ title: '', description: '', type: 'collector', badgeImageUrl: '', active: true });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { loadRewards(); }, []);
   const loadRewards = async () => { setLoading(true); try { setRewards(await getRewards()); } catch (e) { console.error(e); } setLoading(false); };
 
   const openForm = (reward = null) => {
-    if (reward) { setEditingReward(reward); setForm({ title: reward.title, description: reward.description || '', type: reward.type || 'collector', active: reward.active !== false }); }
-    else { setEditingReward(null); setForm({ title: '', description: '', type: 'collector', active: true }); }
-    setBadgeFile(null); setShowForm(true);
+    if (reward) { setEditingReward(reward); setForm({ title: reward.title, description: reward.description || '', type: reward.type || 'collector', badgeImageUrl: reward.badgeImageUrl || '', active: reward.active !== false }); }
+    else { setEditingReward(null); setForm({ title: '', description: '', type: 'collector', badgeImageUrl: '', active: true }); }
+    setShowForm(true);
   };
 
   const handleSubmit = async (e) => {
@@ -32,9 +30,7 @@ export default function AdminRewardsPage() {
     if (!form.title) return;
     setSaving(true);
     try {
-      let badgeImageUrl = editingReward?.badgeImageUrl || '';
-      if (badgeFile) { badgeImageUrl = await uploadBadge(badgeFile); }
-      const data = { ...form, badgeImageUrl };
+      const data = { ...form };
       if (editingReward) { await updateReward(editingReward.id, data); }
       else { await addReward(data); }
       setShowForm(false); await loadRewards();
@@ -72,7 +68,7 @@ export default function AdminRewardsPage() {
           rewards.map((reward) => (
             <div key={reward.id} className="card" style={{ textAlign: 'center', position: 'relative' }}>
               {reward.badgeImageUrl ? (
-                <img src={reward.badgeImageUrl} alt={reward.title} style={{ width: 64, height: 64, objectFit: 'contain', margin: '0 auto 12px' }} />
+                <img src={getDirectImageUrl(reward.badgeImageUrl)} alt={reward.title} style={{ width: 64, height: 64, objectFit: 'contain', margin: '0 auto 12px' }} />
               ) : (
                 <div style={{ fontSize: 48, marginBottom: 12 }}>{getRewardIcon(reward.type)}</div>
               )}
@@ -117,13 +113,14 @@ export default function AdminRewardsPage() {
                   <textarea className="input" style={{ height: 80, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} placeholder="Deskripsi reward..." />
                 </div>
                 <div style={{ marginBottom: 16 }}>
-                  <label className="body-sm" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Badge Image (opsional)</label>
-                  <div style={{ border: '2px dashed var(--hairline)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center', cursor: 'pointer' }}
-                    onClick={() => document.getElementById('badge-input').click()}>
-                    <Upload size={20} color="var(--muted-soft)" style={{ margin: '0 auto 6px' }} />
-                    <p className="body-sm" style={{ color: 'var(--muted)', fontSize: 12 }}>{badgeFile ? badgeFile.name : 'Upload gambar badge'}</p>
-                  </div>
-                  <input id="badge-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setBadgeFile(e.target.files[0])} />
+                  <label className="body-sm" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Badge Image URL (opsional)</label>
+                  <input type="url" className="input" value={form.badgeImageUrl} onChange={(e) => setForm({...form, badgeImageUrl: e.target.value})} placeholder="https://drive.google.com/..." />
+                  {form.badgeImageUrl && (
+                    <div style={{ marginTop: 12, padding: 12, border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', display: 'inline-block', backgroundColor: 'var(--surface-dark)' }}>
+                      <img src={getDirectImageUrl(form.badgeImageUrl)} alt="Preview" style={{ height: 64, objectFit: 'contain' }} 
+                           onError={(e) => { e.target.style.display = 'none'; if (e.target.parentElement) { e.target.parentElement.innerHTML = '<span style="color:red;font-size:12px">URL Gambar tidak valid</span>'; } }} />
+                    </div>
+                  )}
                 </div>
                 <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input type="checkbox" id="active" checked={form.active} onChange={(e) => setForm({...form, active: e.target.checked})} />

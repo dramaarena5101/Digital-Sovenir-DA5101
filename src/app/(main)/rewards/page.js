@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRewards } from '@/lib/firestore';
-import { REWARD_TYPES, formatDate } from '@/lib/utils';
+import { REWARD_TYPES, formatDate, getDirectImageUrl, getVideoEmbedUrl } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Award, Star, Sparkles, Shield, Trophy } from 'lucide-react';
+import { Award, Star, Sparkles, Shield, Trophy, Eye, X } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -19,6 +20,7 @@ export default function RewardsPage() {
   const { userData } = useAuth();
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
     loadRewards();
@@ -134,17 +136,29 @@ export default function RewardsPage() {
             <motion.div key={reward.id} variants={fadeUp} custom={i + 2}>
               <div className="card" style={{ height: '100%', textAlign: 'center', padding: 'var(--space-xl)' }}>
                 {reward.badgeImageUrl ? (
-                  <img src={reward.badgeImageUrl} alt={reward.title}
-                    style={{ width: 80, height: 80, objectFit: 'contain', margin: '0 auto 16px' }} />
+                  <img src={getDirectImageUrl(reward.badgeImageUrl)} alt={reward.title} 
+                       style={{ width: 80, height: 80, objectFit: 'contain', margin: '0 auto 16px' }} 
+                       onError={(e) => { e.target.style.display = 'none'; if (e.target.parentElement) { e.target.parentElement.innerHTML = '<span style="color:red;font-size:12px">Image Error</span>'; } }}
+                  />
                 ) : (
                   <div style={{ fontSize: 48, marginBottom: 16 }}>{getRewardIcon(reward.type)}</div>
                 )}
                 <h3 className="title-md" style={{ marginBottom: 8 }}>{reward.title}</h3>
                 <p className="body-sm" style={{ color: 'var(--muted)' }}>{reward.description}</p>
-                <div style={{ marginTop: 16 }}>
+                
+                <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
                   <span className="badge badge-success" style={{ fontSize: 12 }}>
                     <Sparkles size={12} /> Dimiliki
                   </span>
+                  {reward.badgeImageUrl && (
+                    <button 
+                      onClick={() => setPreviewUrl(reward.badgeImageUrl)}
+                      className="btn-secondary" 
+                      style={{ fontSize: 11, padding: '4px 10px', height: 26 }}
+                    >
+                      <Eye size={12} style={{ marginRight: 4 }} /> Lihat Detail
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -168,6 +182,35 @@ export default function RewardsPage() {
           </p>
         </div>
       </motion.div>
+
+      {/* Preview Modal */}
+      <AnimatePresence>
+        {previewUrl && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={() => setPreviewUrl(null)}>
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: 800, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--hairline)' }}>
+                <h3 className="title-md">Preview Reward</h3>
+                <button onClick={() => setPreviewUrl(null)} className="btn-icon"><X size={20} /></button>
+              </div>
+              
+              <div style={{ width: '100%', height: '75vh', backgroundColor: '#f0f0f0' }}>
+                <iframe 
+                  src={getVideoEmbedUrl(previewUrl)} 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 'none' }}
+                  allow="autoplay"
+                ></iframe>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

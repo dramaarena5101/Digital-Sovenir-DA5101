@@ -44,6 +44,11 @@ export function SettingsProvider({ children }) {
           showRewards: data.showRewards !== false,
         });
         
+        // Save global data version for caching
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('da_global_data_version', (data.dataVersion || 1).toString());
+        }
+        
         // Apply theme data attribute to the <html> tag for CSS variables to kick in
         if (typeof document !== 'undefined') {
           document.documentElement.setAttribute('data-theme', data.theme || 'default');

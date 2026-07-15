@@ -14,8 +14,18 @@ import {
   serverTimestamp,
   writeBatch,
   getCountFromServer,
+  increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
+
+// =====================
+// DATA VERSIONING
+// =====================
+
+export async function bumpDataVersion() {
+  const docRef = doc(db, 'settings', 'general');
+  return updateDoc(docRef, { dataVersion: increment(1) }).catch(e => console.error("Error bumping data version", e));
+}
 
 // =====================
 // ACTIVATION CODES
@@ -113,51 +123,24 @@ export async function checkIfUserExists(uid) {
 // =====================
 
 export async function getVideos(category) {
-  // Caching logic for videos
   const CACHE_KEY = `da_videos_cache_${category || 'all'}`;
-  const LAST_FETCH_KEY = `da_videos_last_fetch_${category || 'all'}`;
+  const VERSION_CACHE_KEY = `da_videos_version_${category || 'all'}`;
   const now = Date.now();
   
-  // Try to load from cache
-  const cachedData = localStorage.getItem(CACHE_KEY);
-  const lastFetch = localStorage.getItem(LAST_FETCH_KEY);
-  
-  let q;
-  if (cachedData && lastFetch) {
-    // If cache exists, only fetch NEW videos added since last fetch
-    const lastDate = new Date(parseInt(lastFetch));
-    if (category && category !== 'all') {
-      q = query(collection(db, 'videos'), where('category', '==', category), where('createdAt', '>', lastDate));
-    } else {
-      q = query(collection(db, 'videos'), where('createdAt', '>', lastDate));
-    }
+  if (typeof window !== 'undefined') {
+    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    const cachedVersion = localStorage.getItem(VERSION_CACHE_KEY);
+    const cachedData = localStorage.getItem(CACHE_KEY);
     
-    try {
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        // We have new videos! Add them to the cache
-        let oldData = JSON.parse(cachedData);
-        const newData = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        const combined = [...oldData, ...newData];
-        
-        // Remove duplicates just in case
-        const uniqueData = Array.from(new Map(combined.map(item => [item.id, item])).values());
-        const sortedData = uniqueData.sort((a, b) => (a.order || 0) - (b.order || 0));
-        
-        localStorage.setItem(CACHE_KEY, JSON.stringify(sortedData));
-        localStorage.setItem(LAST_FETCH_KEY, now.toString());
-        return sortedData;
-      } else {
-        // No new videos, return cache
-        return JSON.parse(cachedData);
-      }
-    } catch (e) {
-      // If query fails (e.g. index missing), fallback to cache
+    // Cek apakah versi masih sama persis
+    if (cachedData && cachedVersion === globalVersion) {
+      console.log("Using permanent versioned cache for videos.");
       return JSON.parse(cachedData);
     }
   }
 
-  // Initial full fetch if no cache
+  // Jika versi beda atau cache belum ada, ambil semua data terbaru
+  let q;
   if (category && category !== 'all') {
     q = query(collection(db, 'videos'), where('category', '==', category));
   } else {
@@ -167,25 +150,34 @@ export async function getVideos(category) {
   const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   const sortedData = data.sort((a, b) => (a.order || 0) - (b.order || 0));
   
-  localStorage.setItem(CACHE_KEY, JSON.stringify(sortedData));
-  localStorage.setItem(LAST_FETCH_KEY, now.toString());
+  if (typeof window !== 'undefined') {
+    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    localStorage.setItem(CACHE_KEY, JSON.stringify(sortedData));
+    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+  }
   
   return sortedData;
 }
 
 export async function addVideo(data) {
-  return addDoc(collection(db, 'videos'), {
+  const res = await addDoc(collection(db, 'videos'), {
     ...data,
     createdAt: serverTimestamp(),
   });
+  await bumpDataVersion();
+  return res;
 }
 
 export async function updateVideo(id, data) {
-  return updateDoc(doc(db, 'videos', id), data);
+  const res = await updateDoc(doc(db, 'videos', id), data);
+  await bumpDataVersion();
+  return res;
 }
 
 export async function deleteVideo(id) {
-  return deleteDoc(doc(db, 'videos', id));
+  const res = await deleteDoc(doc(db, 'videos', id));
+  await bumpDataVersion();
+  return res;
 }
 
 // =====================
@@ -208,9 +200,9 @@ export async function getPhotos(category) {
 // Frontend function to resolve folders into images
 export async function getResolvedPhotos(category) {
   console.log("getResolvedPhotos called for category:", category);
-  const CACHE_KEY = `da_resolved_photos_v3_${category || 'all'}`;
-  const DEFS_CACHE_KEY = `da_resolved_defs_v3_${category || 'all'}`;
-  const LAST_FETCH_KEY = `da_resolved_photos_last_fetch_v3_${category || 'all'}`;
+  const CACHE_KEY = `da_resolved_photos_v4_${category || 'all'}`;
+  const DEFS_CACHE_KEY = `da_resolved_defs_v4_${category || 'all'}`;
+  const LAST_FETCH_KEY = `da_resolved_photos_last_fetch_v4_${category || 'all'}`;
   const now = Date.now();
   
   // 1. Fetch raw definitions (folders & images) from Firestore
@@ -221,34 +213,47 @@ export async function getResolvedPhotos(category) {
     q = query(collection(db, 'photos'));
   }
   
-  console.log("Executing getDocs for photos collection...");
+  console.log("Checking local cache first...");
+  const cachedDefs = localStorage.getItem(DEFS_CACHE_KEY);
+  const cachedData = localStorage.getItem(CACHE_KEY);
+  const VERSION_CACHE_KEY = `da_resolved_photos_version_v4_${category || 'all'}`;
+  let needsRefetch = true;
+  let globalVersion = '1';
+  
+  if (typeof window !== 'undefined') {
+    globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    const cachedVersion = localStorage.getItem(VERSION_CACHE_KEY);
+    const lastFetch = localStorage.getItem(LAST_FETCH_KEY);
+    
+    if (cachedData && cachedDefs && cachedVersion === globalVersion && lastFetch) {
+      // Untuk foto Google Drive, URL thumbnail akan kedaluwarsa dalam beberapa jam.
+      // Jadi kita TETAP harus membatasi cache maksimal 1 jam, meskipun versinya tidak berubah.
+      const isTimeValid = now - parseInt(lastFetch) < 3600000;
+      
+      if (isTimeValid) {
+        needsRefetch = false;
+        console.log("Using versioned & time-valid cache for photos. Skipping Firestore & Drive API.");
+        return JSON.parse(cachedData);
+      }
+    }
+  }
+
+  // Jika versi beda atau waktu sudah lebih dari 1 jam
+  console.log("Cache expired or version changed. Executing getDocs for photos collection...");
   try {
     const snap = await getDocs(q);
     const definitions = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     console.log("Firestore definitions fetched:", definitions);
     
-    // 2. Check if definitions have changed
-    const cachedDefs = localStorage.getItem(DEFS_CACHE_KEY);
     const currentDefsString = JSON.stringify(definitions.map(d => d.id).sort());
+    const isDefsSame = cachedDefs === currentDefsString;
     
-    const cachedData = localStorage.getItem(CACHE_KEY);
-    const lastFetch = localStorage.getItem(LAST_FETCH_KEY);
-    
-    let needsRefetch = true;
-    
-    if (cachedData && lastFetch && cachedDefs) {
-      const isDefsSame = cachedDefs === currentDefsString;
-      const isTimeValid = Date.now() - parseInt(lastFetch) < 3600000; 
-      
-      if (isDefsSame && isTimeValid) {
-        needsRefetch = false;
-        console.log("Using cached data.");
-      }
-    }
-
-    if (!needsRefetch) {
-      return JSON.parse(cachedData);
-    }
+    // Jika versi berbeda (misal menu lain diedit) TAPI isi folder foto sebenarnya tidak berubah,
+    // kita bisa menghemat pemanggilan Google Drive API asalkan waktunya masih di bawah 1 jam.
+    // Tapi karena kode di atas sudah mengecek waktu, jika sampai ke titik ini, berarti antara:
+    // 1. Versi berubah (ada data Firebase yg berubah)
+    // 2. Waktu sudah > 1 jam (Link Google Drive mungkin sudah mati)
+    // Jadi kita HARUS tetap memanggil Google Drive API untuk memperbarui URL gambarnya.
 
     console.log("Need to refetch from Drive API.");
     // 3. Resolve definitions to actual photos via Drive API
@@ -312,6 +317,7 @@ export async function getResolvedPhotos(category) {
     
     localStorage.setItem(CACHE_KEY, JSON.stringify(sortedData));
     localStorage.setItem(DEFS_CACHE_KEY, currentDefsString);
+    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
     localStorage.setItem(LAST_FETCH_KEY, now.toString());
 
     return sortedData;
@@ -322,14 +328,18 @@ export async function getResolvedPhotos(category) {
 }
 
 export async function addPhoto(data) {
-  return addDoc(collection(db, 'photos'), {
+  const res = await addDoc(collection(db, 'photos'), {
     ...data,
     createdAt: serverTimestamp(),
   });
+  await bumpDataVersion();
+  return res;
 }
 
 export async function deletePhoto(id) {
-  return deleteDoc(doc(db, 'photos', id));
+  const res = await deleteDoc(doc(db, 'photos', id));
+  await bumpDataVersion();
+  return res;
 }
 
 // =====================
@@ -337,24 +347,51 @@ export async function deletePhoto(id) {
 // =====================
 
 export async function getAudios() {
+  const CACHE_KEY = 'da_audios_cache_v2';
+  const VERSION_CACHE_KEY = 'da_audios_version_v2';
+  
+  if (typeof window !== 'undefined') {
+    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    const cachedVersion = localStorage.getItem(VERSION_CACHE_KEY);
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    
+    if (cachedData && cachedVersion === globalVersion) {
+      return JSON.parse(cachedData);
+    }
+  }
+
   const q = query(collection(db, 'audios'), orderBy('order', 'asc'));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  
+  if (typeof window !== 'undefined') {
+    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+  }
+  
+  return data;
 }
 
 export async function addAudio(data) {
-  return addDoc(collection(db, 'audios'), {
+  const res = await addDoc(collection(db, 'audios'), {
     ...data,
     createdAt: serverTimestamp(),
   });
+  await bumpDataVersion();
+  return res;
 }
 
 export async function updateAudio(id, data) {
-  return updateDoc(doc(db, 'audios', id), data);
+  const res = await updateDoc(doc(db, 'audios', id), data);
+  await bumpDataVersion();
+  return res;
 }
 
 export async function deleteAudio(id) {
-  return deleteDoc(doc(db, 'audios', id));
+  const res = await deleteDoc(doc(db, 'audios', id));
+  await bumpDataVersion();
+  return res;
 }
 
 // =====================
@@ -362,20 +399,45 @@ export async function deleteAudio(id) {
 // =====================
 
 export async function getDocuments() {
+  const CACHE_KEY = 'da_documents_cache_v2';
+  const VERSION_CACHE_KEY = 'da_documents_version_v2';
+  
+  if (typeof window !== 'undefined') {
+    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    const cachedVersion = localStorage.getItem(VERSION_CACHE_KEY);
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    
+    if (cachedData && cachedVersion === globalVersion) {
+      return JSON.parse(cachedData);
+    }
+  }
+
   const q = query(collection(db, 'documents'), orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  
+  if (typeof window !== 'undefined') {
+    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+  }
+  
+  return data;
 }
 
 export async function addDocument(data) {
-  return addDoc(collection(db, 'documents'), {
+  const res = await addDoc(collection(db, 'documents'), {
     ...data,
     createdAt: serverTimestamp(),
   });
+  await bumpDataVersion();
+  return res;
 }
 
 export async function deleteDocument(id) {
-  return deleteDoc(doc(db, 'documents', id));
+  const res = await deleteDoc(doc(db, 'documents', id));
+  await bumpDataVersion();
+  return res;
 }
 
 // =====================

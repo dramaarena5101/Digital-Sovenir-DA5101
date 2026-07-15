@@ -21,7 +21,7 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const { user, userData } = useAuth();
   const { settings } = useSettings();
-  const logoSrc = settings?.logoUrl || null;
+  const logoSrc = settings?.logoUrl || '/logo.png';
 
   const handleLogout = async () => {
     await signOut();

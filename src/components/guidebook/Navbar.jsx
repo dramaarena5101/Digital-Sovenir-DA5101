@@ -75,8 +75,8 @@ export default function Navbar({ onReplayIntro }) {
               <img src="/logo.png" alt="DA" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.target.style.display = "none"; e.target.parentElement.innerHTML = `<span style="font-family:'Bebas Neue',cursive;font-size:16px;color:#FF6B00">DA</span>`; }} />
             </div>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: 18, letterSpacing: "0.05em", color: "#111827", lineHeight: 1 }}>DRAMA ARENA</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: "0.2em", color: "#FF6B00", textTransform: "uppercase" }}>5101 EDITION</div>
+              <div style={{ fontFamily: "var(--font-wondra)", fontSize: 22, fontWeight: 700, letterSpacing: "0.02em", color: "#111827", lineHeight: 1 }}>DRAMA ARENA</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: "0.2em", color: "#FF6B00", textTransform: "uppercase", marginTop: 2 }}>5101 EDITION</div>
             </div>
           </a>
 

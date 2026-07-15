@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }) {
   const userInitials = userData?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
   const userName = userData?.name || user?.displayName || 'User';
 
-  const logoSrc = settings?.logoUrl || null;
+  const logoSrc = settings?.logoUrl || '/logo.png';
   
   const LogoBlock = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -152,7 +152,7 @@ export default function DashboardLayout({ children }) {
                 }}>
                   {userInitials}
                 </div>
-                <span className="body-sm" style={{ fontWeight: 500 }}>{userName}</span>
+                <span className="body-sm" style={{ fontWeight: 500, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}>{userName}</span>
               </div>
               <button onClick={handleLogout} className="btn-secondary" style={{ height: 36, padding: '0 12px' }}>
                 <LogOut size={16} /> Keluar

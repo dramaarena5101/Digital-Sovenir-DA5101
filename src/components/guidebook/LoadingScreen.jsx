@@ -114,8 +114,8 @@ export default function LoadingScreen({ onDone }) {
                 </motion.div>
 
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: "clamp(36px,6vw,60px)", letterSpacing: "0.1em", color: "#111827", lineHeight: 1 }}>DRAMA ARENA</div>
-                  <div style={{ fontFamily: "'Bebas Neue', cursive", fontSize: "clamp(16px,3vw,26px)", letterSpacing: "0.35em", color: "#FF6B00", marginTop: 4 }}>5101 · IT'S TIME TO SHINE</div>
+                  <div style={{ fontFamily: "var(--font-wondra)", fontSize: "clamp(40px,7vw,70px)", fontWeight: 700, letterSpacing: "0.02em", color: "#111827", lineHeight: 1 }}>DRAMA ARENA</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "clamp(12px,2vw,16px)", fontWeight: 600, letterSpacing: "0.2em", color: "#FF6B00", marginTop: 8 }}>5101 · IT'S TIME TO SHINE</div>
                 </motion.div>
               </motion.div>
             )}
