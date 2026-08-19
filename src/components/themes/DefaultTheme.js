@@ -123,7 +123,7 @@ export default function DefaultTheme({
                   </div>
 
                   <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--on-dark-soft)', fontSize: 12 }}>Satu komik, satu aktivasi</span>
+                    <span style={{ color: 'var(--on-dark-soft)', fontSize: 12 }}>Satu figura, satu aktivasi</span>
                     <span className="badge badge-coral" style={{ fontSize: 10 }}>PREMIUM</span>
                   </div>
                 </div>

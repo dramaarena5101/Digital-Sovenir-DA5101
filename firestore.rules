@@ -52,11 +52,11 @@ service cloud.firestore {
       allow get: if isAuth(); 
       allow list: if isAdmin();
       
-      allow update: if isAuth() && 
+      allow update: if isAdmin() || (isAuth() && 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'usedBy', 'usedDate']) &&
         resource.data.status == 'unused' &&
         request.resource.data.status == 'used' &&
-        request.resource.data.usedBy == request.auth.uid;
+        request.resource.data.usedBy == request.auth.uid);
         
       allow create, delete: if isAdmin();
     }

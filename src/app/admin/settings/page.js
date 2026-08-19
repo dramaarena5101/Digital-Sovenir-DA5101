@@ -45,6 +45,7 @@ export default function SettingsPage() {
     showSoundtrack: true,
     showBonus: true,
     showRewards: true,
+    isWebReady: true,
   });
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export default function SettingsPage() {
         showSoundtrack: settings.showSoundtrack !== false,
         showBonus: settings.showBonus !== false,
         showRewards: settings.showRewards !== false,
+        isWebReady: settings.isWebReady !== false,
       });
     }
   }, [settings]);
@@ -264,6 +266,27 @@ export default function SettingsPage() {
               </label>
             ))}
           </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--hairline-soft)', margin: '24px 0' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <Layout color="var(--primary)" />
+            <h2 className="title-md">Status Website (Maintenance Mode)</h2>
+          </div>
+          <div className="body-sm" style={{ color: 'var(--muted)', marginBottom: 16 }}>
+            Jika dimatikan, pengguna umum akan melihat halaman "Coming Soon" dan tidak bisa mengakses dashboard.
+          </div>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 12, cursor: 'pointer', backgroundColor: formData.isWebReady ? 'color-mix(in srgb, var(--success) 10%, transparent)' : 'color-mix(in srgb, var(--error) 10%, transparent)', padding: '12px 16px', borderRadius: 'var(--radius-md)' }}>
+            <input 
+              type="checkbox" 
+              checked={formData.isWebReady} 
+              onChange={(e) => setFormData({ ...formData, isWebReady: e.target.checked })} 
+              style={{ width: 18, height: 18, accentColor: formData.isWebReady ? 'var(--success)' : 'var(--error)' }}
+            />
+            <span className="body-strong" style={{ color: formData.isWebReady ? 'var(--success)' : 'var(--error)' }}>
+              {formData.isWebReady ? 'Website Siap (Publik)' : 'Mode Maintenance (Coming Soon)'}
+            </span>
+          </label>
         </motion.div>
 
         {/* CATEGORIES */}

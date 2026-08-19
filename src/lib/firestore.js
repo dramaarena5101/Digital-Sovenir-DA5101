@@ -109,7 +109,55 @@ export async function getActivationCodes(statusFilter) {
 }
 
 export async function deleteActivationCode(codeId) {
-  return deleteDoc(doc(db, 'activation_codes', codeId));
+  try {
+    const codeRef = doc(db, 'activation_codes', codeId);
+    const codeSnap = await getDoc(codeRef);
+    if (codeSnap.exists()) {
+      const codeData = codeSnap.data();
+      // If code was used by a user, revoke user's activation
+      if (codeData.usedBy) {
+        const userRef = doc(db, 'users', codeData.usedBy);
+        await updateDoc(userRef, {
+          activated: false,
+          activationCode: null,
+          activationDate: null,
+        }).catch(e => console.error("Error revoking user activation:", e));
+      }
+    }
+    return deleteDoc(codeRef);
+  } catch (err) {
+    console.error("Error in deleteActivationCode:", err);
+    throw err;
+  }
+}
+
+// Reset an activation code from 'used' back to 'unused' and revoke user activation
+export async function resetActivationCode(codeId) {
+  try {
+    const codeRef = doc(db, 'activation_codes', codeId);
+    const codeSnap = await getDoc(codeRef);
+    if (codeSnap.exists()) {
+      const codeData = codeSnap.data();
+      if (codeData.usedBy) {
+        const userRef = doc(db, 'users', codeData.usedBy);
+        await updateDoc(userRef, {
+          activated: false,
+          activationCode: null,
+          activationDate: null,
+        }).catch(e => console.error("Error revoking user activation:", e));
+      }
+      await updateDoc(codeRef, {
+        status: 'unused',
+        usedBy: null,
+        usedDate: null,
+      });
+      return { success: true };
+    }
+    return { success: false, error: 'Kode tidak ditemukan' };
+  } catch (err) {
+    console.error("Error resetting code:", err);
+    throw err;
+  }
 }
 
 export async function checkIfUserExists(uid) {
@@ -520,7 +568,36 @@ export async function getUsers() {
 }
 
 export async function deleteUser(id) {
-  return deleteDoc(doc(db, 'users', id));
+  try {
+    const userRef = doc(db, 'users', id);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      // If user had an activation code, release that activation code back to 'unused'
+      let codeToRelease = userData.activationCode;
+      
+      if (!codeToRelease) {
+        const q = query(collection(db, 'activation_codes'), where('usedBy', '==', id));
+        const codeSnaps = await getDocs(q);
+        if (!codeSnaps.empty) {
+          codeToRelease = codeSnaps.docs[0].id;
+        }
+      }
+
+      if (codeToRelease) {
+        const codeRef = doc(db, 'activation_codes', codeToRelease);
+        await updateDoc(codeRef, {
+          status: 'unused',
+          usedBy: null,
+          usedDate: null,
+        }).catch(e => console.error("Error releasing code on deleteUser:", e));
+      }
+    }
+    return deleteDoc(userRef);
+  } catch (err) {
+    console.error("Error in deleteUser:", err);
+    throw err;
+  }
 }
 
 // =====================

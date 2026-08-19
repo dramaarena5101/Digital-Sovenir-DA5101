@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { signOut } from '@/lib/auth';
@@ -12,6 +12,8 @@ import {
   Gift, Award, User, LogOut, Menu, X, ChevronRight, Search
 } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
+import Hero3DModel from '@/components/ui/Hero3DModel';
+import { use3DStore } from '@/store/use3DStore';
 
 const iconMap = { Home, Video, Camera, BookOpen, Music, Gift, Award, User };
 
@@ -21,6 +23,7 @@ export default function DashboardLayout({ children }) {
   const router = useRouter();
   const { user, userData } = useAuth();
   const { settings } = useSettings();
+  const setSection = use3DStore((state) => state.setCurrentSection);
 
   const visibleNavItems = NAV_ITEMS.filter(item => {
     if (item.href === '/videos' && settings?.showVideo === false) return false;
@@ -95,6 +98,91 @@ export default function DashboardLayout({ children }) {
       </div>
     </div>
   );
+
+  // Set 3D model section inside useEffect to avoid state updates during render
+  useEffect(() => {
+    if (settings?.isWebReady === false && userData?.role !== 'admin') {
+      setSection('login');
+    }
+  }, [settings?.isWebReady, userData?.role, setSection]);
+
+  if (settings?.isWebReady === false && userData?.role !== 'admin') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#0A0810', overflow: 'hidden', position: 'relative' }}>
+        {/* Background Gradient & Noise */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 120% at 50% 40%, #17111f 0%, #0A0810 70%)', zIndex: 0 }} />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0.05, mixBlendMode: 'overlay',
+          backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\'><filter id=\'n\'><feTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'2\' stitchTiles=\'stitch\'/></filter><rect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/></svg>")'
+        }} />
+
+        {/* FULL DEVICE 3D CANVAS (Particles, sparkles & 3D interactions expand across whole screen) */}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2 }}>
+          <Hero3DModel 
+            inline={true} 
+            animateOnMount={true} 
+            touchAction="none" 
+            pointerEvents="auto" 
+            modelPosition={[0, 1.4, 0]} 
+            modelScale={1.3} 
+          />
+        </div>
+
+        {/* Content Container (Card positioned in lower area so 3D Logo floats cleanly above it) */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 10, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: '100vh', 
+          alignItems: 'center', 
+          justifyContent: 'flex-end', 
+          padding: '24px 24px 48px', 
+          textAlign: 'center',
+          pointerEvents: 'none'
+        }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            transition={{ duration: 0.6, delay: 0.1 }}
+            style={{ 
+              pointerEvents: 'auto',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)', 
+              backdropFilter: 'blur(24px)', 
+              WebkitBackdropFilter: 'blur(24px)',
+              padding: '32px 28px 36px', 
+              borderRadius: '28px', 
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5)',
+              maxWidth: 440,
+              width: '100%',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, border: '1px solid rgba(255,107,0,0.3)', background: 'rgba(255,107,0,0.1)', marginBottom: 16 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF6B00', boxShadow: '0 0 10px #FF6B00' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#FF6B00' }}>Maintenance Mode</span>
+            </div>
+
+            <h1 className="display-md" style={{ marginBottom: 12, color: 'white', fontFamily: 'var(--font-bebas)', letterSpacing: '0.05em', fontSize: '2.2rem' }}>
+              SABAR YA... 🚧
+            </h1>
+            <p className="body-md" style={{ color: 'rgba(255,255,255,0.7)', margin: '0 auto 24px', lineHeight: 1.6, fontSize: 14 }}>
+              Website Digital Souvenir saat ini sedang dalam tahap persiapan akhir atau maintenance. Silakan kembali lagi nanti untuk pengalaman yang lebih maksimal!
+            </p>
+            
+            <button 
+              onClick={handleLogout} 
+              className="btn-primary btn-lg" 
+              style={{ width: '100%', justifyContent: 'center', borderRadius: 100 }}
+            >
+              <LogOut size={18} /> Keluar Akun
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   if (isTopNavTheme) {
     return (

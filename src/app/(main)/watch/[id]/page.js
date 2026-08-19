@@ -9,6 +9,7 @@ import { Play, MessageSquare, Send, Reply, ThumbsUp, Trash2, ArrowLeft } from 'l
 import { formatDistanceToNow } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import Link from 'next/link';
+import CustomVideoPlayer from '@/components/video/CustomVideoPlayer';
 
 const Avatar = ({ src, name, size = 40 }) => {
   const [error, setError] = useState(false);
@@ -157,25 +158,13 @@ export default function WatchPage() {
     }}>
       
       {/* FULL WIDTH PLAYER SECTION */}
-      <div style={{ width: '100%', backgroundColor: '#000', marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: 2000, margin: '0 auto', paddingTop: '42%' }}>
-          <iframe
-            src={getVideoEmbedUrl(video.videoUrl)}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-            sandbox="allow-scripts allow-same-origin allow-presentation"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+      <div style={{ width: '100%', backgroundColor: '#000000', marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 24px' }}>
+          <CustomVideoPlayer
+            videoUrl={video.videoUrl}
+            title={video.title}
+            poster={video.thumbnailUrl}
           />
-          {video.videoUrl?.includes('drive.google.com') && (
-            <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', zIndex: 10, cursor: 'default' }} title=" " />
-          )}
-          {(video.videoUrl?.includes('youtube') || video.videoUrl?.includes('youtu.be')) && (
-            <>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60px', zIndex: 10, cursor: 'default' }} title=" " />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, width: '120px', height: '65px', zIndex: 10, cursor: 'default' }} title=" " />
-              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '250px', height: '65px', zIndex: 10, cursor: 'default' }} title=" " />
-            </>
-          )}
         </div>
       </div>
 

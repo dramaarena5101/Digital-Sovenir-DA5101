@@ -202,7 +202,7 @@ export default function ActivatePage() {
                   Aktivasi Digital Souvenir
                 </h2>
                 <p className="body-sm" style={{ color: 'var(--muted)' }}>
-                  Masukkan Activation Code dari komik Anda
+                  Masukkan Activation Code dari figura Anda
                 </p>
               </div>
 
@@ -324,7 +324,7 @@ export default function ActivatePage() {
               </form>
 
               <p className="caption" style={{ textAlign: 'center', marginTop: 16, color: 'var(--muted-soft)' }}>
-                Kode terdapat pada komik Pentas Seni yang Anda beli.
+                Kode terdapat pada figura Pentas Seni yang Anda beli.
                 <br />
                 Format: DA-XXXX-XXXX
               </p>

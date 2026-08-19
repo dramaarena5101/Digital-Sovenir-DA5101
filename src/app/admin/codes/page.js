@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { generateCodes, getActivationCodes, deleteActivationCode, checkIfUserExists } from '@/lib/firestore';
+import { generateCodes, getActivationCodes, deleteActivationCode, resetActivationCode, checkIfUserExists } from '@/lib/firestore';
 import { formatDateTime } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Key, Plus, Download, Search, CheckCircle, XCircle, Copy, Check, Trash2 } from 'lucide-react';
+import { Key, Plus, Download, Search, CheckCircle, XCircle, Copy, Check, Trash2, RotateCcw } from 'lucide-react';
 import { useDialog } from '@/contexts/DialogContext';
 import * as XLSX from 'xlsx';
 
@@ -34,26 +34,40 @@ export default function AdminCodesPage() {
   }, [filter]);
 
   const handleDeleteClick = async (code) => {
-    if (code.status === 'used' && code.usedBy) {
-      const exists = await checkIfUserExists(code.usedBy);
-      if (exists) {
-        showDialog({ title: 'Perhatian', message: 'Kode ini sedang dipakai oleh pengguna yang masih aktif. Hapus pengguna terlebih dahulu.' });
-        return;
-      }
-    }
+    const isUsed = code.status === 'used';
     
     showDialog({
       title: 'Hapus Kode Aktivasi',
-      message: `Yakin ingin menghapus kode ${code.code}? Data tidak dapat dikembalikan.`,
+      message: isUsed 
+        ? `Kode ${code.code} sedang TERPAKAI. Menghapus kode ini akan mencabut akses aktivasi pengguna terkait dan mengembalikannya ke halaman aktivasi. Yakin ingin menghapus?`
+        : `Yakin ingin menghapus kode ${code.code}? Data tidak dapat dikembalikan.`,
       isDanger: true,
       onConfirm: async () => {
         try {
           await deleteActivationCode(code.id);
           setCodes(codes.filter(c => c.id !== code.id));
-          showToast('Kode berhasil dihapus', 'success');
+          showToast(isUsed ? 'Kode dihapus & status aktivasi pengguna dicabut.' : 'Kode berhasil dihapus', 'success');
         } catch (e) {
           console.error(e);
           showToast('Gagal menghapus kode', 'error');
+        }
+      }
+    });
+  };
+
+  const handleResetClick = async (code) => {
+    showDialog({
+      title: 'Reset Kode Aktivasi',
+      message: `Yakin ingin mereset kode ${code.code} menjadi TERSEDIA lagi? Pengguna terkait akan dicabut akses aktivasinya dan dikembalikan ke halaman aktivasi.`,
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await resetActivationCode(code.id);
+          await loadCodes();
+          showToast('Kode berhasil di-reset menjadi TERSEDIA!', 'success');
+        } catch (e) {
+          console.error(e);
+          showToast('Gagal mereset kode', 'error');
         }
       }
     });
@@ -125,7 +139,7 @@ export default function AdminCodesPage() {
           <div>
             <h1 className="display-sm" style={{ marginBottom: 8 }}>Kode Aktivasi</h1>
             <p className="body-sm" style={{ color: 'var(--muted)' }}>
-              Generate dan kelola kode aktivasi untuk pembeli komik.
+              Generate dan kelola kode aktivasi untuk pembeli figura.
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -336,6 +350,16 @@ export default function AdminCodesPage() {
                   {code.batch || '-'}
                 </span>
                 <div style={{ display: 'flex', gap: 4 }}>
+                  {code.status === 'used' && (
+                    <button
+                      onClick={() => handleResetClick(code)}
+                      className="btn-icon"
+                      style={{ width: 30, height: 30, color: 'var(--primary)' }}
+                      title="Reset Kode (Jadikan Tersedia & Revoke User)"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={() => copyCode(code.code)}
                     className="btn-icon"

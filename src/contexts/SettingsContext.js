@@ -18,6 +18,7 @@ export function SettingsProvider({ children }) {
     welcomeImageUrl: '',
     videoCategories: VIDEO_CATEGORIES.filter(c => c.value !== 'all'),
     photoCategories: PHOTO_CATEGORIES.filter(c => c.value !== 'all'),
+    isWebReady: true,
   });
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +43,7 @@ export function SettingsProvider({ children }) {
           showSoundtrack: data.showSoundtrack !== false,
           showBonus: data.showBonus !== false,
           showRewards: data.showRewards !== false,
+          isWebReady: data.isWebReady !== false,
         });
         
         // Save global data version for caching
