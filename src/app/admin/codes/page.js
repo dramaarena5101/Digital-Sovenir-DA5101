@@ -163,6 +163,9 @@ export default function AdminCodesPage() {
     c.batch?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const usedCount = codes.filter(c => c.status === 'used').length;
+  const unusedCount = codes.filter(c => c.status === 'unused').length;
+
   const totalItems = filteredCodes.length;
   const itemsPerPage = pageSize === 'all' ? totalItems : (parseInt(pageSize) || 20);
   const totalPages = Math.max(1, Math.ceil(totalItems / (itemsPerPage || 1)));
