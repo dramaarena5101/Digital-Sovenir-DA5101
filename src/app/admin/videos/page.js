@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getVideos, addVideo, updateVideo, deleteVideo } from '@/lib/firestore';
+import { getVideos, addVideo, updateVideo, deleteVideo, reorderVideos } from '@/lib/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Plus, Edit, Trash2, X, Save, Search, Play } from 'lucide-react';
+import { Video, Plus, Edit, Trash2, X, Save, Search, Play, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { getVideoEmbedUrl, getVideoThumbnailUrl } from '@/lib/utils';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useDialog } from '@/contexts/DialogContext';
@@ -27,12 +27,84 @@ export default function AdminVideosPage() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', isDanger: false, onConfirm: null });
   const [selectedVideo, setSelectedVideo] = useState(null);
 
+  // Drag and Drop state
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [hasOrderChanged, setHasOrderChanged] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+
   useEffect(() => { loadVideos(); }, []);
 
   const loadVideos = async () => {
     setLoading(true);
     try { setVideos(await getVideos()); } catch (e) { console.error(e); }
     setLoading(false);
+    setHasOrderChanged(false);
+  };
+
+  /* ---------------- DRAG AND DROP REORDER LOGIC ---------------- */
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', index); } catch (err) {}
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null) return;
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const updated = [...videos];
+    const [draggedItem] = updated.splice(draggedIndex, 1);
+    updated.splice(dropIndex, 0, draggedItem);
+
+    const reordered = updated.map((v, i) => ({ ...v, order: i + 1 }));
+    setVideos(reordered);
+    setHasOrderChanged(true);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleMoveItem = (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= videos.length) return;
+
+    const updated = [...videos];
+    const [item] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, item);
+
+    const reordered = updated.map((v, i) => ({ ...v, order: i + 1 }));
+    setVideos(reordered);
+    setHasOrderChanged(true);
+  };
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      await reorderVideos(videos);
+      setHasOrderChanged(false);
+      showToast('Urutan video berhasil disimpan!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal menyimpan urutan video', 'error');
+    }
+    setSavingOrder(false);
   };
 
   const openForm = (video = null) => {
@@ -273,18 +345,65 @@ export default function AdminVideosPage() {
                 </div>
               </div>
             )}
+            {/* Drag & Drop Reorder Notice */}
+            {!searchQuery && (
+              <div style={{ padding: '8px 20px', backgroundColor: 'rgba(255,107,0,0.04)', borderBottom: '1px solid var(--hairline-soft)', fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <GripVertical size={14} style={{ color: 'var(--color-da-orange)' }} />
+                <span><strong>Tips:</strong> Klik & tahan ikon titik-titik untuk menderetkan ulang posisi video, atau gunakan panah atas/bawah.</span>
+              </div>
+            )}
             {filteredVideos.map((video, i) => (
-              <div key={video.id} style={{
-                display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px',
-                borderBottom: i < filteredVideos.length - 1 ? '1px solid var(--hairline-soft)' : 'none',
-                backgroundColor: selectedIds.includes(video.id) ? 'rgba(255,107,0,0.05)' : 'transparent'
-              }}>
-                <input type="checkbox" checked={selectedIds.includes(video.id)} onChange={() => handleSelectRow(video.id)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
+              <div 
+                key={video.id}
+                draggable={!searchQuery}
+                onDragStart={(e) => handleDragStart(e, i)}
+                onDragOver={(e) => handleDragOver(e, i)}
+                onDragEnd={handleDragEnd}
+                onDrop={(e) => handleDrop(e, i)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
+                  borderBottom: i < filteredVideos.length - 1 ? '1px solid var(--hairline-soft)' : 'none',
+                  borderTop: dragOverIndex === i && draggedIndex !== i ? '2px solid var(--color-da-orange)' : 'none',
+                  backgroundColor: draggedIndex === i 
+                    ? 'rgba(255,107,0,0.12)' 
+                    : selectedIds.includes(video.id) 
+                      ? 'rgba(255,107,0,0.05)' 
+                      : 'transparent',
+                  opacity: draggedIndex === i ? 0.5 : 1,
+                  transition: 'background-color 0.15s ease, opacity 0.15s ease'
+                }}
+              >
+                {/* Drag Handle */}
+                {!searchQuery && (
+                  <div 
+                    title="Geser untuk mengubah urutan" 
+                    style={{ cursor: 'grab', color: 'var(--muted-soft)', display: 'flex', alignItems: 'center', padding: '4px 2px', flexShrink: 0 }}
+                  >
+                    <GripVertical size={18} />
+                  </div>
+                )}
+
+                {/* Checkbox */}
+                <input type="checkbox" checked={selectedIds.includes(video.id)} onChange={() => handleSelectRow(video.id)} style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }} />
+
+                {/* Order Badge */}
+                <span 
+                  title={`Urutan #${i + 1}`}
+                  style={{ 
+                    fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                    color: 'var(--color-da-orange)', backgroundColor: 'rgba(255,107,0,0.1)',
+                    padding: '2px 8px', borderRadius: 'var(--radius-pill)', minWidth: 34, textAlign: 'center', flexShrink: 0
+                  }}
+                >
+                  #{i + 1}
+                </span>
+
+                {/* Thumbnail */}
                 <div 
                   onClick={() => setSelectedVideo(video)}
                   title="Tonton Video"
                   style={{ 
-                    width: 80, height: 45, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--surface-dark)', 
+                    width: 72, height: 42, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--surface-dark)', 
                     flexShrink: 0, overflow: 'hidden', position: 'relative', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}
@@ -302,20 +421,81 @@ export default function AdminVideosPage() {
                     <Play size={16} fill="white" color="white" />
                   </div>
                 </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="title-sm" style={{ marginBottom: 2 }}>{video.title}</div>
-                <div className="caption" style={{ color: 'var(--muted-soft)' }}>
-                  {videoCategories.find(c => c.value === video.category)?.label || video.category}
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="title-sm" style={{ marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{video.title}</div>
+                  <div className="caption" style={{ color: 'var(--muted-soft)' }}>
+                    {videoCategories.find(c => c.value === video.category)?.label || video.category || 'Tanpa Kategori'}
+                  </div>
+                </div>
+
+                {/* Reorder Buttons (Up / Down) */}
+                {!searchQuery && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+                    <button 
+                      disabled={i === 0}
+                      onClick={() => handleMoveItem(i, -1)}
+                      title="Naikkan urutan"
+                      style={{ 
+                        background: 'none', border: 'none', cursor: i === 0 ? 'default' : 'pointer', 
+                        opacity: i === 0 ? 0.2 : 0.7, padding: 2, color: 'var(--body)' 
+                      }}
+                    >
+                      <ArrowUp size={14} />
+                    </button>
+                    <button 
+                      disabled={i === filteredVideos.length - 1}
+                      onClick={() => handleMoveItem(i, 1)}
+                      title="Turunkan urutan"
+                      style={{ 
+                        background: 'none', border: 'none', cursor: i === filteredVideos.length - 1 ? 'default' : 'pointer', 
+                        opacity: i === filteredVideos.length - 1 ? 0.2 : 0.7, padding: 2, color: 'var(--body)' 
+                      }}
+                    >
+                      <ArrowDown size={14} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button className="btn-icon" onClick={() => openForm(video)} style={{ width: 32, height: 32 }}><Edit size={14} /></button>
+                  <button className="btn-icon" onClick={() => handleDelete(video.id)} style={{ width: 32, height: 32, color: 'var(--error)' }}><Trash2 size={14} /></button>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button className="btn-icon" onClick={() => openForm(video)} style={{ width: 32, height: 32 }}><Edit size={14} /></button>
-                <button className="btn-icon" onClick={() => handleDelete(video.id)} style={{ width: 32, height: 32, color: 'var(--error)' }}><Trash2 size={14} /></button>
-              </div>
-            </div>
             ))}
           </>
         )}
+        </div>
+      </div>
+
+      {/* Floating Save Order Action Bar */}
+      <AnimatePresence>
+        {hasOrderChanged && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: 50 }}
+            style={{
+              position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 90,
+              backgroundColor: 'var(--surface-dark)', color: '#ffffff', padding: '12px 24px',
+              borderRadius: 'var(--radius-pill)', boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+              display: 'flex', alignItems: 'center', gap: 16, border: '1px solid rgba(255,107,0,0.4)'
+            }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 500 }}>Urutan video telah diubah</span>
+            <button 
+              className="btn-primary" 
+              onClick={handleSaveOrder} 
+              disabled={savingOrder} 
+              style={{ padding: '6px 16px', height: 32, fontSize: 12 }}
+            >
+              <Save size={14} /> {savingOrder ? 'Menyimpan...' : 'Simpan Urutan Baru'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
         </div>
       </div>
 

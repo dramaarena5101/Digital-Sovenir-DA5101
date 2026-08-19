@@ -228,6 +228,16 @@ export async function deleteVideo(id) {
   return res;
 }
 
+export async function reorderVideos(orderedVideos) {
+  const batch = writeBatch(db);
+  orderedVideos.forEach((video, index) => {
+    const docRef = doc(db, 'videos', video.id);
+    batch.update(docRef, { order: index + 1 });
+  });
+  await batch.commit();
+  await bumpDataVersion();
+}
+
 // =====================
 // CONTENT: PHOTOS
 // =====================
