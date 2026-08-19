@@ -145,21 +145,24 @@ export default function WatchPage() {
   const getReplies = (parentId) => comments.filter(c => c.parentId === parentId).reverse(); // Oldest replies first
 
   return (
-    <div style={{ 
-      backgroundColor: '#0A0810', 
-      color: 'white', 
-      minHeight: 'calc(100vh - 64px)', 
-      margin: '-32px -24px', 
-      borderRadius: '24px 24px 0 0',
-      boxShadow: '0 -10px 40px rgba(0,0,0,0.08)',
-      overflow: 'hidden',
-      paddingBottom: '80px',
-      fontFamily: 'var(--font-body)',
-    }}>
+    <div 
+      className="watch-page-container"
+      style={{ 
+        backgroundColor: '#0A0810', 
+        color: 'white', 
+        minHeight: 'calc(100vh - 64px)', 
+        margin: '-32px -24px', 
+        borderRadius: '24px 24px 0 0',
+        boxShadow: '0 -10px 40px rgba(0,0,0,0.08)',
+        overflow: 'hidden',
+        paddingBottom: '80px',
+        fontFamily: 'var(--font-body)',
+      }}
+    >
       
       {/* FULL WIDTH PLAYER SECTION */}
       <div style={{ width: '100%', backgroundColor: '#000000', marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 24px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 24px' }} className="watch-player-wrapper">
           <CustomVideoPlayer
             videoUrl={video.videoUrl}
             title={video.title}
@@ -169,14 +172,30 @@ export default function WatchPage() {
       </div>
 
       {/* CONTENT SECTION */}
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }} className="watch-content-wrapper">
       
         {/* Back to Videos */}
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 16 }}>
           <Link href="/videos" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#A0A0A0', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'white'} onMouseLeave={e => e.currentTarget.style.color = '#A0A0A0'}>
             <ArrowLeft size={16} /> Kembali ke Daftar Video
           </Link>
         </div>
+
+        <style jsx global>{`
+          @media (max-width: 768px) {
+            .watch-page-container {
+              margin: -24px -16px !important;
+              border-radius: 0 !important;
+              padding-bottom: 60px !important;
+            }
+            .watch-player-wrapper {
+              padding: 0 !important;
+            }
+            .watch-content-wrapper {
+              padding: 0 16px !important;
+            }
+          }
+        `}</style>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 

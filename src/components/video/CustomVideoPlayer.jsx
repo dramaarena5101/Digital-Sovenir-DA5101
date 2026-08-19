@@ -678,8 +678,11 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
         {/* CONTROLS ROW */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           
+        {/* CONTROLS ROW */}
+        <div className="player-controls-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+          
           {/* LEFT: PLAY/PAUSE, VOLUME, TIME */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Play/Pause Button */}
             <button
               onClick={togglePlay}
@@ -698,11 +701,11 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
               onMouseLeave={(e) => (e.currentTarget.style.color = '#ffffff')}
             >
               {ended ? (
-                <RotateCcw size={22} />
+                <RotateCcw size={20} />
               ) : playing ? (
-                <Pause size={24} fill="currentColor" />
+                <Pause size={22} fill="currentColor" />
               ) : (
-                <Play size={24} fill="currentColor" />
+                <Play size={22} fill="currentColor" />
               )}
             </button>
 
@@ -725,23 +728,24 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                 }}
               >
                 {muted || volume === 0 ? (
-                  <VolumeX size={20} />
+                  <VolumeX size={18} />
                 ) : volume < 0.5 ? (
-                  <Volume1 size={20} />
+                  <Volume1 size={18} />
                 ) : (
-                  <Volume2 size={20} />
+                  <Volume2 size={18} />
                 )}
               </button>
 
               {/* Volume Slider Dropdown / Expand */}
               <div
+                className="volume-slider-box"
                 style={{
-                  width: showVolumeSlider ? 70 : 0,
+                  width: showVolumeSlider ? 60 : 0,
                   overflow: 'hidden',
                   transition: 'width 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  marginLeft: showVolumeSlider ? 6 : 0,
+                  marginLeft: showVolumeSlider ? 4 : 0,
                 }}
               >
                 <input
@@ -752,7 +756,7 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                   value={muted ? 0 : volume}
                   onChange={handleVolumeChange}
                   style={{
-                    width: 60,
+                    width: 50,
                     height: 4,
                     accentColor: '#FF6B00',
                     cursor: 'pointer',
@@ -762,15 +766,15 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
             </div>
 
             {/* Time Indicator */}
-            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 500, fontFamily: 'monospace' }}>
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 500, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
               <span>{formatTime(playedSeconds)}</span>
-              <span style={{ margin: '0 4px', opacity: 0.5 }}>/</span>
+              <span style={{ margin: '0 3px', opacity: 0.5 }}>/</span>
               <span style={{ opacity: 0.7 }}>{formatTime(duration)}</span>
             </div>
           </div>
 
           {/* RIGHT: SPEED MENU & FULLSCREEN */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Speed Selector Menu */}
             <div style={{ position: 'relative' }}>
               <button
@@ -784,7 +788,7 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                   borderColor: showSpeedMenu ? '#FF6B00' : 'rgba(255,255,255,0.2)',
                   borderRadius: 6,
                   color: showSpeedMenu ? '#FF6B00' : 'rgba(255,255,255,0.9)',
-                  padding: '3px 8px',
+                  padding: '4px 8px',
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -792,9 +796,10 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                   alignItems: 'center',
                   gap: 4,
                 }}
+                title="Kecepatan Pemutaran"
               >
-                <Settings size={14} />
-                <span>{playbackRate === 1 ? 'Kecepatan' : `${playbackRate}x`}</span>
+                <Settings size={16} />
+                <span className="speed-text-label">{playbackRate === 1 ? 'Kecepatan' : `${playbackRate}x`}</span>
               </button>
 
               {showSpeedMenu && (
@@ -879,6 +884,15 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
           100% {
             transform: translate(-50%, -50%) scale(1.3);
             opacity: 0;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .speed-text-label {
+            display: none !important;
+          }
+          .volume-slider-box {
+            display: none !important;
           }
         }
       `}</style>
