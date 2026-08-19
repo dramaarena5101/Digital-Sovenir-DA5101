@@ -1945,16 +1945,18 @@
         if (isActivating) {
           targetEx = 0; targetOp = 1; targetEm = key === 'mid' ? (1.0 + Math.max(0, Math.sin(activationElapsed * 6) * 1.5)) : 0.5;
         } else if (document.body.classList.contains('puzzle-mode')) {
-          const logoProgress = Math.min(1.0, Math.max(0, currentHits / MAX_HITS));
+          const rawRatio = Math.min(1.0, Math.max(0, currentHits / MAX_HITS));
+          // Exponential power curve: stays nearly invisible during early hits (0-50),
+          // and rapidly surges in opacity as hits approach 101!
+          const logoProgress = Math.pow(rawRatio, 2.8);
           if (key === 'mid') {
             targetEx = 0;
             targetOp = 1.0;
             targetEm = 0.8 + centerStarFlash;
           } else {
-            // NO SCATTERING (targetEx = 0)! As currentHits goes 0 -> 101, logo parts fade in smoothly from 0 opacity to 1.0!
             targetEx = 0;
             targetOp = logoProgress;
-            targetEm = logoProgress * 0.6;
+            targetEm = logoProgress * 0.7;
           }
         } else if (!introDone && introStart !== null) {
           const p = Math.min(1, Math.max(0, (elapsed - introStart - cfg.delay) / cfg.duration));
