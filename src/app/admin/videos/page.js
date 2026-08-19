@@ -496,8 +496,6 @@ export default function AdminVideosPage() {
           </motion.div>
         )}
       </AnimatePresence>
-        </div>
-      </div>
 
       {/* Form Modal */}
       <AnimatePresence>
