@@ -1785,19 +1785,7 @@
 
         if (isActivating) {
           targetEx = 0; targetOp = 1; targetEm = key === 'mid' ? (1.0 + Math.max(0, Math.sin(activationElapsed * 6) * 1.5)) : 0.5;
-        } else if (isPuzzleActive) {
-          if (rt.isSnapped) {
-            targetEx = 0; targetOp = 1; targetEm = 0.8;
-          } else {
-            targetEx = 1.0;
-            targetOp = 0.8; targetEm = 0.1;
-          }
-        } else if (!introDone && introStart !== null) {
-          const p = Math.min(1, Math.max(0, (elapsed - introStart - cfg.delay) / cfg.duration));
-          targetEx = EXPLODE_SCALE[key] * explodeForce;
-          targetOp = 1;
-          targetEm = kfFrame.states[key].em + (explodeForce * 0.5);
-        if (document.body.classList.contains('puzzle-mode')) {
+        } else if (document.body.classList.contains('puzzle-mode')) {
           const assembleRatio = Math.min(1.0, Math.max(0, tapCount / MAX_TAPS));
           if (key === 'mid') {
             targetEx = 0;
@@ -1809,6 +1797,11 @@
             targetOp = Math.min(1.0, 0.15 + assembleRatio * 0.85);
             targetEm = assembleRatio * 0.5;
           }
+        } else if (!introDone && introStart !== null) {
+          const p = Math.min(1, Math.max(0, (elapsed - introStart - cfg.delay) / cfg.duration));
+          targetEx = EXPLODE_SCALE[key] * explodeForce;
+          targetOp = 1;
+          targetEm = kfFrame.states[key].em + (explodeForce * 0.5);
         } else {
           targetEx = kfFrame.states[key].ex * EXPLODE_SCALE[key]; targetOp = kfFrame.states[key].op;
           targetEm = kfFrame.states[key].em;
