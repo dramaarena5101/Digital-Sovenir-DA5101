@@ -102,15 +102,20 @@ function generateUniqueCode() {
 
 // Get all activation codes
 export async function getActivationCodes(statusFilter) {
-  let q;
-  if (statusFilter && statusFilter !== 'all') {
-    q = query(collection(db, 'activation_codes'), where('status', '==', statusFilter));
-  } else {
-    q = query(collection(db, 'activation_codes'));
+  try {
+    let q;
+    if (statusFilter && statusFilter !== 'all') {
+      q = query(collection(db, 'activation_codes'), where('status', '==', statusFilter));
+    } else {
+      q = query(collection(db, 'activation_codes'));
+    }
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0));
+  } catch (err) {
+    console.warn("Notice: Unable to fetch activation codes. Check Firebase Security Rules or user admin status:", err);
+    return [];
   }
-  const snap = await getDocs(q);
-  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  return data.sort((a, b) => (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0));
 }
 
 export async function deleteActivationCode(codeId) {
