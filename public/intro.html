@@ -535,7 +535,7 @@
   </style>
 </head>
 
-<body>
+<body class="puzzle-mode">
 
   <!-- ========================================== -->
   <!-- 🎵 EDIT NAMA FILE AUDIO ANDA DI SINI 🎵 -->
@@ -579,7 +579,7 @@
   <!-- 💥 101 TAP MINI-GAME OVERLAY 💥 -->
   <div id="tap-game-overlay" style="
     position: fixed;
-    top: 20px;
+    top: 40px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -587,35 +587,36 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    background: rgba(10, 8, 16, 0.88);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 90, 34, 0.4);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 90, 34, 0.25);
-    padding: 12px 24px;
-    border-radius: 16px;
+    background: rgba(10, 8, 16, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 90, 34, 0.5);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 90, 34, 0.3);
+    padding: 16px 28px;
+    border-radius: 20px;
     user-select: none;
-    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.5s ease;
+    transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.4s ease;
     max-width: 90vw;
-    width: 320px;
+    width: 360px;
     text-align: center;
   ">
-    <div style="font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; color: #ff5a22; text-transform: uppercase; font-weight: 700;">
-      ⚡ MINI GAME 101 DA5101 ⚡
+    <div style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: #ff5a22; text-transform: uppercase; font-weight: 700;">
+      ⚡ SYARAT MASUK: ENERGI 101 DA5101 ⚡
     </div>
     
-    <div style="display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; margin: 2px 0;">
-      <span id="tap-count-text" style="font-family: var(--disp); font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: 0.05em; transition: transform 0.1s ease;">
-        0 <span style="font-size: 14px; color: rgba(255,255,255,0.4); font-weight: 500;">/ 101</span>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; margin: 4px 0;">
+      <span id="tap-count-text" style="font-family: var(--disp); font-size: 32px; font-weight: 800; color: #ffffff; letter-spacing: 0.05em; transition: transform 0.1s ease; line-height: 1;">
+        0 <span style="font-size: 16px; color: rgba(255,255,255,0.4); font-weight: 500;">/ 101</span>
       </span>
 
-      <div style="flex: 1; height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); position: relative;">
-        <div id="tap-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff3a12 0%, #ffaa00 100%); border-radius: 5px; transition: width 0.15s ease; box-shadow: 0 0 12px rgba(255, 90, 34, 0.8);"></div>
+      <div style="flex: 1; height: 12px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); position: relative;">
+        <div id="tap-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff3a12 0%, #ffaa00 100%); border-radius: 6px; transition: width 0.1s linear; box-shadow: 0 0 14px rgba(255, 90, 34, 0.9);"></div>
       </div>
     </div>
 
-    <div id="tap-sub-text" style="font-size: 11px; color: rgba(243, 238, 228, 0.75); font-family: var(--body); line-height: 1.3;">
-      Ketuk logo 3D sebanyak <strong style="color: #ff5a22;">101 kali</strong> untuk bangkitkan energi!
+    <div id="tap-sub-text" style="font-size: 11.5px; color: rgba(243, 238, 228, 0.8); font-family: var(--body); line-height: 1.4;">
+      Ketuk logo 3D <strong style="color: #ff5a22;">101 kali secara beruntun</strong>! <br/>
+      <span id="decay-warning" style="font-size: 10.5px; color: rgba(255, 170, 0, 0.85); transition: color 0.2s;">Jangan jeda terlalu lama atau energi akan menurun!</span>
     </div>
 
     <button id="tap-skip-btn" style="
@@ -626,8 +627,8 @@
       font-family: var(--mono);
       cursor: pointer;
       text-decoration: underline;
-      padding: 2px 6px;
-      margin-top: 2px;
+      padding: 4px 8px;
+      margin-top: 4px;
       transition: color 0.2s;
     ">
       [ Lewati Mini Game ]
@@ -1040,6 +1041,7 @@
     let tapCount = 0;
     const MAX_TAPS = 101;
     let isTapCompleted = false;
+    let lastTapTime = Date.now();
     let hitPulseScale = 0;
     let hitTiltX = 0, hitTiltY = 0;
 
@@ -1063,11 +1065,18 @@
       if (isTapCompleted || isActivating) return;
 
       tapCount++;
+      lastTapTime = Date.now();
       if (tapCount > MAX_TAPS) tapCount = MAX_TAPS;
 
       hitPulseScale = 0.28;
       hitTiltX = (Math.random() - 0.5) * 0.35;
       hitTiltY = (Math.random() - 0.5) * 0.35;
+
+      const decayWarn = document.getElementById("decay-warning");
+      if (decayWarn) {
+        decayWarn.innerHTML = "Jangan jeda terlalu lama atau energi akan menurun!";
+        decayWarn.style.color = "rgba(255, 170, 0, 0.85)";
+      }
 
       // Play hit audio
       const clickAudio = document.getElementById('custom-part-click-sfx');
@@ -1094,8 +1103,8 @@
       const countEl = document.getElementById("tap-count-text");
       const progressEl = document.getElementById("tap-progress-bar");
       if (countEl) {
-        countEl.innerHTML = `${tapCount} <span style="font-size: 14px; color: rgba(255,255,255,0.4); font-weight: 500;">/ ${MAX_TAPS}</span>`;
-        countEl.style.transform = "scale(1.2)";
+        countEl.innerHTML = `${Math.floor(tapCount)} <span style="font-size: 16px; color: rgba(255,255,255,0.4); font-weight: 500;">/ ${MAX_TAPS}</span>`;
+        countEl.style.transform = "scale(1.25)";
         setTimeout(() => countEl.style.transform = "scale(1)", 80);
       }
       if (progressEl) {
@@ -1111,6 +1120,9 @@
       if (isTapCompleted) return;
       isTapCompleted = true;
       tapCount = MAX_TAPS;
+
+      // UNLOCK PAGE SCROLLING & STORYTELLING UI
+      document.body.classList.remove('puzzle-mode');
 
       const successAudio = document.getElementById('custom-success-sfx') || document.getElementById('custom-intro-sfx');
       if (successAudio) {
@@ -1129,15 +1141,15 @@
 
       const overlay = document.getElementById("tap-game-overlay");
       const subText = document.getElementById("tap-sub-text");
-      if (subText) subText.innerHTML = "<strong style='color:#00ff88; font-size:12px;'>✨ ENERGI 101 DA5101 AKTIF! ✨</strong>";
+      if (subText) subText.innerHTML = "<strong style='color:#00ff88; font-size:12.5px;'>✨ ENERGI 101 DA5101 DIAKTIFKAN! ✨</strong>";
       
       if (overlay) {
         overlay.style.borderColor = "#00ff88";
-        overlay.style.boxShadow = "0 0 35px rgba(0,255,136,0.6)";
+        overlay.style.boxShadow = "0 0 40px rgba(0,255,136,0.7)";
         setTimeout(() => {
           overlay.style.opacity = "0";
           overlay.style.transform = "translate(-50%, -30px)";
-          setTimeout(() => overlay.style.display = "none", 500);
+          setTimeout(() => overlay.style.display = "none", 600);
         }, 1800);
       }
     }
@@ -1563,6 +1575,29 @@
         logoDragRotYVel += (0 - logoDragRotY) * 60 * dt;
         logoDragRotYVel *= Math.exp(-8 * dt);
         logoDragRotY += logoDragRotYVel * dt;
+      }
+
+      // ⚡ 101 TAP ENERGY DECAY LOGIC ⚡
+      if (!isTapCompleted && tapCount > 0) {
+        const timeSinceTap = Date.now() - lastTapTime;
+        if (timeSinceTap > 950) {
+          tapCount = Math.max(0, tapCount - dt * 28);
+          
+          const countEl = document.getElementById("tap-count-text");
+          const progressEl = document.getElementById("tap-progress-bar");
+          const decayWarn = document.getElementById("decay-warning");
+
+          if (countEl) {
+            countEl.innerHTML = `${Math.floor(tapCount)} <span style="font-size: 16px; color: rgba(255,255,255,0.4); font-weight: 500;">/ ${MAX_TAPS}</span>`;
+          }
+          if (progressEl) {
+            progressEl.style.width = `${(tapCount / MAX_TAPS) * 100}%`;
+          }
+          if (decayWarn) {
+            decayWarn.innerHTML = "<strong style='color:#ef4444;'>⚠️ ENERGI MENURUN! TEKAN BERUNTUN!</strong>";
+            decayWarn.style.color = "#ef4444";
+          }
+        }
       }
 
       if (hitPulseScale > 0.001) {
