@@ -1336,12 +1336,17 @@
       });
     }, 500);
 
+    const handleHitInput = (clientX, clientY) => {
+      if (isGameCompleted || isActivating) return;
+      triggerTapHit(clientX, clientY);
+    };
+
     addEventListener("pointerdown", (e) => {
       if (isActivating) return;
+      if (e.target && e.target.closest && e.target.closest('#tap-skip-btn')) return;
 
-      // Trigger 101 clicker mini game hit
-      if (!isTapCompleted) {
-        triggerTapHit(e.clientX, e.clientY);
+      if (!isGameCompleted) {
+        handleHitInput(e.clientX, e.clientY);
       }
 
       const ndcX = (e.clientX / innerWidth) * 2 - 1;
@@ -1568,6 +1573,7 @@
     function onReady() {
       loaderBar.style.width = "100%";
       loaderEl.style.opacity = '0';
+      loaderEl.style.pointerEvents = 'none';
       setTimeout(() => {
         loaderEl.style.display = 'none';
         isPuzzleActive = false;
