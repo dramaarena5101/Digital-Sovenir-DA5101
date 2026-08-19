@@ -676,9 +676,6 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
         </div>
 
         {/* CONTROLS ROW */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-          
-        {/* CONTROLS ROW */}
         <div className="player-controls-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           
           {/* LEFT: PLAY/PAUSE, VOLUME, TIME */}
