@@ -21,9 +21,13 @@ service cloud.firestore {
     
     // Helper: Check if user is admin
     function isAdmin() {
-      return isAuth() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuth() && (
+        (request.auth.token.email != null && request.auth.token.email.lower() == 'sigapsayangibu@gmail.com') ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        )
+      );
     }
     
     // Users collection
@@ -36,6 +40,9 @@ service cloud.firestore {
         (
           // Normal profile update: explicitly block changing role and activated status
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'activated'])
+        ) || (
+          // Developer auto-upgrade rule
+          request.auth.token.email.lower() == 'sigapsayangibu@gmail.com'
         ) || (
           // Activation update: strictly require linking to a valid used code
           request.resource.data.activated == true &&

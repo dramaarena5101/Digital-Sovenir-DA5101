@@ -180,10 +180,11 @@ export async function toggleCodeAdminRole(codeId) {
 
     // 2. If code was used by a user, update user's role too!
     if (codeData.usedBy) {
-      const userRef = doc(db, 'users', codeData.usedBy);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
+      try {
+        const userRef = doc(db, 'users', codeData.usedBy);
         await updateDoc(userRef, { role: newRole });
+      } catch (userErr) {
+        console.warn("Notice: User role update skipped or restricted by security rules:", userErr);
       }
     }
 
