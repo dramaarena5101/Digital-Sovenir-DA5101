@@ -55,17 +55,21 @@ export async function activateCode(uid, code) {
 
   // Update user
   const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
+  const userPayload = {
     activated: true,
     activationCode: code.toUpperCase().trim(),
     activationDate: serverTimestamp(),
-  });
+  };
+  if (codeData.role === 'admin') {
+    userPayload.role = 'admin';
+  }
+  await updateDoc(userRef, userPayload);
 
   return { success: true };
 }
 
 // Generate batch activation codes
-export async function generateCodes(count, batch_name) {
+export async function generateCodes(count, batch_name, isAdminCode = false) {
   const codes = [];
   const batchWrite = writeBatch(db);
 
@@ -77,6 +81,7 @@ export async function generateCodes(count, batch_name) {
       status: 'unused',
       usedBy: null,
       usedDate: null,
+      role: isAdminCode ? 'admin' : 'user',
       batch: batch_name || `batch-${Date.now()}`,
       createdAt: serverTimestamp(),
     });
@@ -153,9 +158,31 @@ export async function resetActivationCode(codeId) {
       });
       return { success: true };
     }
-    return { success: false, error: 'Kode tidak ditemukan' };
+// Toggle code & user role between 'admin' and 'user'
+export async function toggleCodeAdminRole(codeId) {
+  try {
+    const codeRef = doc(db, 'activation_codes', codeId);
+    const codeSnap = await getDoc(codeRef);
+    if (!codeSnap.exists()) return { success: false, error: 'Kode tidak ditemukan' };
+
+    const codeData = codeSnap.data();
+    const newRole = codeData.role === 'admin' ? 'user' : 'admin';
+
+    // 1. Update activation code
+    await updateDoc(codeRef, { role: newRole });
+
+    // 2. If code was used by a user, update user's role too!
+    if (codeData.usedBy) {
+      const userRef = doc(db, 'users', codeData.usedBy);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        await updateDoc(userRef, { role: newRole });
+      }
+    }
+
+    return { success: true, newRole };
   } catch (err) {
-    console.error("Error resetting code:", err);
+    console.error("Error toggling admin role:", err);
     throw err;
   }
 }
