@@ -14,6 +14,8 @@ import {
   RotateCcw,
   AlertCircle,
   Loader2,
+  ChevronRight,
+  ChevronLeft,
 } from 'lucide-react';
 
 function getCleanVideoInfo(rawUrl) {
@@ -79,8 +81,10 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
   const [error, setError] = useState(false);
   const [ended, setEnded] = useState(false);
 
-  // Speed menu & Volume hover states
-  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  // Settings menu & Volume hover states
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('main'); // 'main' | 'quality' | 'speed'
+  const [quality, setQuality] = useState('auto');
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   // Hover tooltip state for seek bar
@@ -127,7 +131,7 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
     if (playing) {
       hideControlsTimer.current = setTimeout(() => {
         setShowControls(false);
-        setShowSpeedMenu(false);
+        setShowSettingsMenu(false);
       }, 3000);
     }
   }, [playing]);
@@ -289,12 +293,37 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
     return `${pad(mins)}:${pad(secs)}`;
   };
 
-  // Speed Selector
+  // Speed & Quality Selector
   const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+  const qualities = [
+    { id: 'auto', label: 'Otomatis', badge: 'HD' },
+    { id: '1080p', label: '1080p', badge: 'FHD' },
+    { id: '720p', label: '720p', badge: 'HD' },
+    { id: '480p', label: '480p', badge: 'SD' },
+    { id: '360p', label: '360p', badge: 'SD' },
+  ];
+
   const handleSpeedSelect = (rate, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setPlaybackRate(rate);
-    setShowSpeedMenu(false);
+    setSettingsTab('main');
+    setShowSettingsMenu(false);
+  };
+
+  const handleQualitySelect = (qId, e) => {
+    if (e) e.stopPropagation();
+    setQuality(qId);
+    setSettingsTab('main');
+    setShowSettingsMenu(false);
+    
+    try {
+      const internal = playerRef.current?.getInternalPlayer();
+      if (internal && typeof internal.setPlaybackQuality === 'function') {
+        internal.setPlaybackQuality(qId === 'auto' ? 'default' : qId);
+      }
+    } catch (err) {
+      console.log('Quality change requested:', qId);
+    }
   };
 
   if (!hasMounted) {
@@ -770,21 +799,22 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
             </div>
           </div>
 
-          {/* RIGHT: SPEED MENU & FULLSCREEN */}
+          {/* RIGHT: SETTINGS MENU & FULLSCREEN */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Speed Selector Menu */}
+            {/* Settings Selector Button */}
             <div style={{ position: 'relative' }}>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowSpeedMenu(!showSpeedMenu);
+                  setShowSettingsMenu(!showSettingsMenu);
+                  setSettingsTab('main');
                 }}
                 style={{
-                  background: showSpeedMenu ? 'rgba(255,107,0,0.2)' : 'none',
+                  background: showSettingsMenu ? 'rgba(255,107,0,0.2)' : 'none',
                   border: '1px solid',
-                  borderColor: showSpeedMenu ? '#FF6B00' : 'rgba(255,255,255,0.2)',
+                  borderColor: showSettingsMenu ? '#FF6B00' : 'rgba(255,255,255,0.2)',
                   borderRadius: 6,
-                  color: showSpeedMenu ? '#FF6B00' : 'rgba(255,255,255,0.9)',
+                  color: showSettingsMenu ? '#FF6B00' : 'rgba(255,255,255,0.9)',
                   padding: '4px 8px',
                   fontSize: 12,
                   fontWeight: 600,
@@ -793,55 +823,193 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                   alignItems: 'center',
                   gap: 4,
                 }}
-                title="Kecepatan Pemutaran"
+                title="Pengaturan Video (Kualitas & Kecepatan)"
               >
                 <Settings size={16} />
-                <span className="speed-text-label">{playbackRate === 1 ? 'Kecepatan' : `${playbackRate}x`}</span>
+                <span className="speed-text-label">Pengaturan</span>
               </button>
 
-              {showSpeedMenu && (
+              {showSettingsMenu && (
                 <div
                   style={{
                     position: 'absolute',
                     bottom: 34,
                     right: 0,
                     backgroundColor: 'rgba(15, 12, 24, 0.95)',
-                    backdropFilter: 'blur(8px)',
+                    backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 8,
-                    padding: '6px 0',
+                    borderRadius: 12,
+                    padding: '8px 0',
                     display: 'flex',
                     flexDirection: 'column',
-                    minWidth: 100,
+                    minWidth: 190,
                     zIndex: 50,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.7)',
                   }}
                 >
-                  <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>
-                    Kecepatan
-                  </div>
-                  {speeds.map((rate) => (
-                    <button
-                      key={rate}
-                      onClick={(e) => handleSpeedSelect(rate, e)}
-                      style={{
-                        padding: '6px 14px',
-                        background: playbackRate === rate ? 'rgba(255, 107, 0, 0.2)' : 'none',
-                        border: 'none',
-                        color: playbackRate === rate ? '#FF6B00' : 'white',
-                        fontSize: 13,
-                        fontWeight: playbackRate === rate ? 600 : 400,
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span>{rate === 1.0 ? 'Normal' : `${rate}x`}</span>
-                      {playbackRate === rate && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF6B00' }} />}
-                    </button>
-                  ))}
+                  {/* MAIN TAB */}
+                  {settingsTab === 'main' && (
+                    <>
+                      <div style={{ padding: '4px 14px 8px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                        Pengaturan Video
+                      </div>
+
+                      {/* Quality menu item */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSettingsTab('quality'); }}
+                        style={{
+                          padding: '10px 14px',
+                          background: 'none',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      >
+                        <span style={{ color: 'rgba(255,255,255,0.9)' }}>Kualitas</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#FF6B00', fontSize: 12 }}>
+                          <span>{quality === 'auto' ? 'Otomatis' : quality}</span>
+                          <ChevronRight size={14} color="rgba(255,255,255,0.5)" />
+                        </div>
+                      </button>
+
+                      {/* Speed menu item */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSettingsTab('speed'); }}
+                        style={{
+                          padding: '10px 14px',
+                          background: 'none',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      >
+                        <span style={{ color: 'rgba(255,255,255,0.9)' }}>Kecepatan</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#FF6B00', fontSize: 12 }}>
+                          <span>{playbackRate === 1 ? 'Normal' : `${playbackRate}x`}</span>
+                          <ChevronRight size={14} color="rgba(255,255,255,0.5)" />
+                        </div>
+                      </button>
+                    </>
+                  )}
+
+                  {/* QUALITY TAB */}
+                  {settingsTab === 'quality' && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSettingsTab('main'); }}
+                        style={{
+                          padding: '6px 12px 8px',
+                          background: 'none',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          color: 'white',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <ChevronLeft size={14} />
+                        <span>Kualitas Video</span>
+                      </button>
+
+                      {qualities.map((q) => (
+                        <button
+                          key={q.id}
+                          onClick={(e) => handleQualitySelect(q.id, e)}
+                          style={{
+                            padding: '8px 14px',
+                            background: quality === q.id ? 'rgba(255, 107, 0, 0.15)' : 'none',
+                            border: 'none',
+                            color: quality === q.id ? '#FF6B00' : 'white',
+                            fontSize: 13,
+                            fontWeight: quality === q.id ? 600 : 400,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                          onMouseEnter={(e) => { if (quality !== q.id) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
+                          onMouseLeave={(e) => { if (quality !== q.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span>{q.label}</span>
+                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}>{q.badge}</span>
+                          </div>
+                          {quality === q.id && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF6B00' }} />}
+                        </button>
+                      ))}
+                    </>
+                  )}
+
+                  {/* SPEED TAB */}
+                  {settingsTab === 'speed' && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSettingsTab('main'); }}
+                        style={{
+                          padding: '6px 12px 8px',
+                          background: 'none',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          color: 'white',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <ChevronLeft size={14} />
+                        <span>Kecepatan Pemutaran</span>
+                      </button>
+
+                      {speeds.map((rate) => (
+                        <button
+                          key={rate}
+                          onClick={(e) => handleSpeedSelect(rate, e)}
+                          style={{
+                            padding: '8px 14px',
+                            background: playbackRate === rate ? 'rgba(255, 107, 0, 0.15)' : 'none',
+                            border: 'none',
+                            color: playbackRate === rate ? '#FF6B00' : 'white',
+                            fontSize: 13,
+                            fontWeight: playbackRate === rate ? 600 : 400,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                          onMouseEnter={(e) => { if (playbackRate !== rate) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
+                          onMouseLeave={(e) => { if (playbackRate !== rate) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                        >
+                          <span>{rate === 1.0 ? 'Normal (1.0x)' : `${rate}x`}</span>
+                          {playbackRate === rate && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF6B00' }} />}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
