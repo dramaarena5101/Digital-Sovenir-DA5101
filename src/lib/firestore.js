@@ -158,6 +158,13 @@ export async function resetActivationCode(codeId) {
       });
       return { success: true };
     }
+    return { success: false, error: 'Kode tidak ditemukan' };
+  } catch (err) {
+    console.error("Error resetting code:", err);
+    throw err;
+  }
+}
+
 // Toggle code & user role between 'admin' and 'user'
 export async function toggleCodeAdminRole(codeId) {
   try {
