@@ -545,38 +545,133 @@
       font-size: 38px;
     }
 
-    #tap-game-overlay {
+    /* 🥊 COMBAT SYSTEM HUD 🥊 */
+    .combat-hud-container {
       position: fixed;
-      top: 30px;
+      top: 28px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 100;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       user-select: none;
       transition: opacity 0.5s ease, transform 0.5s ease;
       text-align: center;
       max-width: 90vw;
+      width: 360px;
     }
 
-    .tap-hint-pill {
-      background: rgba(10, 8, 16, 0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 90, 34, 0.45);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 90, 34, 0.25);
-      padding: 10px 22px;
-      border-radius: 30px;
+    .combat-objective-pill {
+      background: rgba(10, 8, 16, 0.90);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 90, 34, 0.4);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+      padding: 7px 18px;
+      border-radius: 20px;
       color: #f3eee4;
       font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.14em;
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
+      transition: all 0.25s ease;
+    }
+
+    .combat-meter-wrap {
+      width: 100%;
+      height: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 90, 34, 0.35);
+      overflow: hidden;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 0 15px rgba(255, 90, 34, 0.15);
+      position: relative;
+    }
+
+    .combat-meter-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff3a12 0%, #ffaa00 100%);
+      border-radius: 5px;
+      transition: width 0.1s linear;
+      position: relative;
+      box-shadow: 0 0 12px rgba(255, 90, 34, 0.8);
+    }
+
+    .combat-meter-fill.pulse {
+      animation: barPulse 0.15s ease-out;
+    }
+
+    @keyframes barPulse {
+      0% { filter: brightness(1.8); transform: scaleY(1.3); }
+      100% { filter: brightness(1.0); transform: scaleY(1.0); }
+    }
+
+    .combat-counter-display {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      align-items: baseline;
+      gap: 6px;
+      background: rgba(10, 8, 16, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 170, 0, 0.3);
+      padding: 4px 14px;
+      border-radius: 12px;
+      transition: transform 0.08s ease, border-color 0.2s ease;
+    }
+
+    .combat-hit-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 900;
+      color: #ff5a22;
+      letter-spacing: 0.1em;
+    }
+
+    .combat-hit-val {
+      font-family: var(--disp);
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 0 12px rgba(255, 90, 34, 0.6);
+    }
+
+    .combat-max-label {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 600;
+    }
+
+    .combat-status-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: rgba(243, 238, 228, 0.5);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    .combat-skip-btn {
+      background: rgba(10, 8, 16, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(243, 238, 228, 0.5);
+      font-size: 10.5px;
+      font-family: var(--mono);
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 5px 10px;
+      transition: all 0.2s ease;
+    }
+
+    .combat-skip-btn:hover {
+      color: #ff5a22;
+      border-color: #ff5a22;
     }
   </style>
 </head>
@@ -623,28 +718,28 @@
   <!-- 12. transition: Suara desiran halus/magis saat layar memutih dan pindah ke halaman utama -->
   <audio id="custom-transition-sfx" src="/transition.mp3" preload="auto"></audio>
   
-  <!-- 💥 DYNAMIC MINIMAL OVERLAY 💥 -->
-  <div id="tap-game-overlay">
-    <div class="tap-hint-pill">
-      <span style="color: #ff5a22; font-weight: 800;">⚡ KETUK BINTANG TENGAH 101 KALI UNTUK MENYUSUN LOGO! ⚡</span>
+  <!-- 💥 COMBAT HIT SYSTEM HUD 💥 -->
+  <div id="tap-game-overlay" class="combat-hud-container">
+    <div id="combat-objective-text" class="combat-objective-pill">
+      ⚡ KETUK BINTANG TENGAH 101 KALI UNTUK MENYUSUN LOGO!
     </div>
 
-    <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-      <span id="tap-count-badge" style="font-family: var(--disp); font-size: 16px; font-weight: 800; color: #ffaa00; background: rgba(0,0,0,0.6); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,170,0,0.4);">
-        0 / 101 TERSUSUN
-      </span>
+    <div class="combat-meter-wrap">
+      <div id="combat-meter-bar" class="combat-meter-fill" style="width: 0%;"></div>
+    </div>
 
-      <button id="tap-skip-btn" style="
-        background: rgba(10, 8, 16, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: rgba(243, 238, 228, 0.5);
-        font-size: 10.5px;
-        font-family: var(--mono);
-        cursor: pointer;
-        border-radius: 20px;
-        padding: 4px 12px;
-        transition: all 0.2s ease;
-      " onmouseenter="this.style.color='#ff5a22'; this.style.borderColor='#ff5a22'" onmouseleave="this.style.color='rgba(243,238,228,0.5)'; this.style.borderColor='rgba(255,255,255,0.2)'">
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; margin-top: 2px;">
+      <div id="combat-counter-box" class="combat-counter-display">
+        <span class="combat-hit-label">HIT</span>
+        <span id="combat-hit-number" class="combat-hit-val">0</span>
+        <span class="combat-max-label">/ 101</span>
+      </div>
+
+      <div id="combat-status-tag" class="combat-status-badge">
+        READY
+      </div>
+
+      <button id="tap-skip-btn" class="combat-skip-btn">
         [ Lewati ]
       </button>
     </div>
@@ -1052,14 +1147,19 @@
     let isHoldingCenter = false;
     let isExploding = false;
 
-    /* ---------------- 101 TAP MINI-GAME STATE & LOGIC ---------------- */
-    let tapCount = 0;
-    const MAX_TAPS = 101;
-    let isTapCompleted = false;
-    let lastTapTime = Date.now();
+    /* ---------------- 💥 COMBAT HIT SYSTEM STATE & LOGIC 💥 ---------------- */
+    let currentHits = 0;
+    const MAX_HITS = 101;
+    let isGameCompleted = false;
+    let lastHitTime = 0;
+
     let hitPulseScale = 0;
     let hitTiltX = 0, hitTiltY = 0;
     let centerStarFlash = 0;
+    let camShake = 0;
+
+    const GRACE_PERIOD_MS = 1500;
+    const DECAY_RATE_PER_SEC = 5.0; // 1 HIT per 200ms
 
     function spawnHitText(x, y, text, isGold = false) {
       const el = document.createElement("div");
@@ -1071,71 +1171,130 @@
       setTimeout(() => el.remove(), 650);
     }
 
+    function updateCombatUI(val) {
+      const numEl = document.getElementById("combat-hit-number");
+      const meterFill = document.getElementById("combat-meter-bar");
+      const statusBadge = document.getElementById("combat-status-tag");
+      const objectivePill = document.getElementById("combat-objective-text");
+
+      const pct = Math.min(100, Math.max(0, (val / MAX_HITS) * 100));
+
+      if (numEl) {
+        numEl.textContent = Math.floor(val);
+      }
+
+      if (meterFill) {
+        meterFill.style.width = pct.toFixed(1) + "%";
+      }
+
+      if (statusBadge) {
+        if (isGameCompleted) {
+          statusBadge.textContent = "LOCKED 101!";
+          statusBadge.style.color = "#00ff88";
+          statusBadge.style.borderColor = "#00ff88";
+          statusBadge.style.background = "rgba(0, 255, 136, 0.15)";
+        } else if (Date.now() - lastHitTime > GRACE_PERIOD_MS && currentHits > 0) {
+          statusBadge.textContent = "DECAYING!";
+          statusBadge.style.color = "#ef4444";
+          statusBadge.style.borderColor = "#ef4444";
+          statusBadge.style.background = "rgba(239, 68, 68, 0.15)";
+        } else if (currentHits > 0) {
+          statusBadge.textContent = "COMBO!";
+          statusBadge.style.color = "#ffaa00";
+          statusBadge.style.borderColor = "#ffaa00";
+          statusBadge.style.background = "rgba(255, 170, 0, 0.15)";
+        } else {
+          statusBadge.textContent = "READY";
+          statusBadge.style.color = "rgba(243, 238, 228, 0.5)";
+          statusBadge.style.borderColor = "rgba(255, 255, 255, 0.1)";
+          statusBadge.style.background = "rgba(255, 255, 255, 0.05)";
+        }
+      }
+
+      if (objectivePill && !isGameCompleted) {
+        if (Date.now() - lastHitTime > GRACE_PERIOD_MS && currentHits > 0) {
+          objectivePill.innerHTML = "<strong style='color:#ef4444;'>⚠️ COMBO DECAYING! KETUK LAGI!</strong>";
+        } else if (currentHits > 0) {
+          objectivePill.innerHTML = "<strong style='color:#ffaa00;'>🔥 MAINTAIN COMBO! TERUS KETUK!</strong>";
+        } else {
+          objectivePill.innerHTML = "⚡ KETUK BINTANG TENGAH 101 KALI UNTUK MENYUSUN LOGO!";
+        }
+      }
+    }
+
     function triggerTapHit(clientX, clientY) {
-      if (isTapCompleted || isActivating) return;
+      if (isGameCompleted || isActivating) return;
 
-      tapCount++;
-      lastTapTime = Date.now();
-      if (tapCount > MAX_TAPS) tapCount = MAX_TAPS;
+      currentHits++;
+      lastHitTime = Date.now();
+      if (currentHits > MAX_HITS) currentHits = MAX_HITS;
 
-      hitPulseScale = 0.38;
-      hitTiltX = (Math.random() - 0.5) * 0.45;
-      hitTiltY = (Math.random() - 0.5) * 0.45;
+      // Target punch down (0.85 - 0.90) & spring bounce back
+      hitPulseScale = -0.12;
+      hitTiltX = (Math.random() - 0.5) * 0.4;
+      hitTiltY = (Math.random() - 0.5) * 0.4;
 
       // 💥 3D CENTER STAR REACTION 💥
       if (runtime["mid"]) {
-        runtime["mid"].spinVel += 16.0; // Rapid spin on hit!
-        runtime["mid"].ex = 0.3;
+        runtime["mid"].spinVel += 16.0;
+        runtime["mid"].ex = 0.25;
       }
-      centerStarFlash = 3.5; // High emission glow on center star!
+      centerStarFlash = 3.5;
+      camShake = 0.15;
+
+      // Counter punch & meter pulse
+      const counterBox = document.getElementById("combat-counter-box");
+      const meterFill = document.getElementById("combat-meter-bar");
+
+      if (counterBox) {
+        counterBox.style.transform = `scale(1.25) rotate(${(Math.random() - 0.5) * 8}deg)`;
+        counterBox.style.borderColor = "#ffaa00";
+        setTimeout(() => {
+          counterBox.style.transform = "scale(1.0) rotate(0deg)";
+          counterBox.style.borderColor = "rgba(255, 170, 0, 0.3)";
+        }, 70);
+      }
+
+      if (meterFill) {
+        meterFill.classList.remove("pulse");
+        void meterFill.offsetWidth;
+        meterFill.classList.add("pulse");
+      }
 
       // Play hit audio
       const clickAudio = document.getElementById('custom-part-click-sfx');
       if (clickAudio) {
         try {
           const clone = clickAudio.cloneNode(true);
-          clone.volume = 0.45;
+          clone.volume = 0.5;
           clone.play().catch(() => {});
         } catch (e) {}
       }
 
-      // CRITICAL HIT TEXT & MILESTONES
-      let text = "CRITICAL! +1";
+      // Milestone Hit Floating Text
+      let text = `HIT +1`;
       let isGold = false;
 
-      if (tapCount === 25) { text = "🔥 25/101 LOGO FORMING!"; isGold = true; }
-      else if (tapCount === 50) { text = "⚡ 50/101 HALF ASSEMBLED!"; isGold = true; }
-      else if (tapCount === 75) { text = "🚀 75/101 OVERDRIVE!"; isGold = true; }
-      else if (tapCount === 100) { text = "💥 100/101 1 LAGI!"; isGold = true; }
-      else if (tapCount === 101) { text = "🎉 101/101 LOGO UTUH!"; isGold = true; }
-      else if (tapCount % 10 === 0) { text = `⚡ CRITICAL ${tapCount}!`; isGold = true; }
+      if (currentHits === 25) { text = "🔥 25 HITS! POWER UP!"; isGold = true; }
+      else if (currentHits === 50) { text = "⚡ 50 HITS! HALF WAY!"; isGold = true; }
+      else if (currentHits === 75) { text = "🚀 75 HITS! OVERDRIVE!"; isGold = true; }
+      else if (currentHits === 100) { text = "💥 100 HITS! 1 LAGI!"; isGold = true; }
+      else if (currentHits === 101) { text = "🎉 101 HITS! COMPLETED!"; isGold = true; }
+      else if (currentHits % 10 === 0) { text = `⚡ ${currentHits} HITS COMBO!`; isGold = true; }
 
       spawnHitText(clientX, clientY, text, isGold);
+      updateCombatUI(currentHits);
 
-      // Update minimal badge UI
-      const badgeEl = document.getElementById("tap-count-badge");
-      if (badgeEl) {
-        badgeEl.textContent = `${Math.floor(tapCount)} / 101 LOGO TERSUSUN`;
-        badgeEl.style.transform = "scale(1.2)";
-        setTimeout(() => badgeEl.style.transform = "scale(1)", 70);
-      }
-
-      if (tapCount >= MAX_TAPS) {
+      if (currentHits >= MAX_HITS) {
         triggerTapVictory();
       }
     }
 
     function triggerTapVictory() {
-      if (isTapCompleted) return;
-      isTapCompleted = true;
-      tapCount = MAX_TAPS;
-
-      const badgeEl = document.getElementById("tap-count-badge");
-      if (badgeEl) {
-        badgeEl.textContent = "101 / 101 LOGO UTUH 100%! ✨";
-        badgeEl.style.color = "#00ff88";
-        badgeEl.style.borderColor = "#00ff88";
-      }
+      if (isGameCompleted) return;
+      isGameCompleted = true;
+      currentHits = MAX_HITS;
+      updateCombatUI(MAX_HITS);
 
       // UNLOCK PAGE SCROLLING & STORYTELLING UI
       document.body.classList.remove('puzzle-mode');
@@ -1147,11 +1306,12 @@
         successAudio.play().catch(() => {});
       }
 
-      hitPulseScale = 1.0;
+      hitPulseScale = 0.8;
       if (runtime["mid"]) {
-        runtime["mid"].spinVel += 35.0;
+        runtime["mid"].spinVel += 40.0;
       }
       centerStarFlash = 6.0;
+      camShake = 0.4;
 
       // Golden flash screen
       const flash = document.createElement("div");
@@ -1165,7 +1325,7 @@
           overlay.style.opacity = "0";
           overlay.style.transform = "translate(-50%, -30px)";
           setTimeout(() => overlay.style.display = "none", 600);
-        }, 1800);
+        }, 2000);
       }
     }
 
@@ -1592,19 +1752,20 @@
         logoDragRotY += logoDragRotYVel * dt;
       }
 
-      // ⚡ 101 TAP ENERGY DECAY LOGIC ⚡
-      if (!isTapCompleted && tapCount > 0) {
-        const timeSinceTap = Date.now() - lastTapTime;
-        if (timeSinceTap > 950) {
-          tapCount = Math.max(0, tapCount - dt * 28);
-          updateLedGauge(tapCount);
-          
-          const decayWarn = document.getElementById("decay-warning");
-          if (decayWarn) {
-            decayWarn.innerHTML = "<strong style='color:#ef4444;'>⚠️ ENERGI MENURUN! TEKAN BERUNTUN!</strong>";
-            decayWarn.style.color = "#ef4444";
-          }
+      // 💥 COMBAT COMBO DECAY LOGIC 💥
+      if (!isGameCompleted && currentHits > 0) {
+        const timeSinceHit = Date.now() - lastHitTime;
+        if (timeSinceHit > GRACE_PERIOD_MS) {
+          currentHits = Math.max(0, currentHits - dt * DECAY_RATE_PER_SEC);
+          updateCombatUI(currentHits);
         }
+      }
+
+      // Micro camera shake decay
+      if (camShake > 0.001) {
+        camera.position.x += (Math.random() - 0.5) * camShake;
+        camera.position.y += (Math.random() - 0.5) * camShake;
+        camShake *= Math.exp(-12 * dt);
       }
 
       if (centerStarFlash > 0.01) {
@@ -1613,10 +1774,10 @@
         centerStarFlash = 0;
       }
 
-      if (hitPulseScale > 0.001) {
-        hitPulseScale *= Math.exp(-14 * dt);
-        hitTiltX *= Math.exp(-12 * dt);
-        hitTiltY *= Math.exp(-12 * dt);
+      if (Math.abs(hitPulseScale) > 0.001) {
+        hitPulseScale *= Math.exp(-16 * dt);
+        hitTiltX *= Math.exp(-14 * dt);
+        hitTiltY *= Math.exp(-14 * dt);
       } else {
         hitPulseScale = 0;
         hitTiltX = 0;
@@ -1715,16 +1876,16 @@
         if (isActivating) {
           targetEx = 0; targetOp = 1; targetEm = key === 'mid' ? (1.0 + Math.max(0, Math.sin(activationElapsed * 6) * 1.5)) : 0.5;
         } else if (document.body.classList.contains('puzzle-mode')) {
-          const assembleRatio = Math.min(1.0, Math.max(0, tapCount / MAX_TAPS));
+          const logoProgress = Math.min(1.0, Math.max(0, currentHits / MAX_HITS));
           if (key === 'mid') {
             targetEx = 0;
             targetOp = 1.0;
             targetEm = 0.8 + centerStarFlash;
           } else {
-            // As tapCount goes 0 -> 101, parts fly in smoothly from outside!
-            targetEx = (1.0 - assembleRatio) * EXPLODE_SCALE[key] * 2.2;
-            targetOp = Math.min(1.0, 0.15 + assembleRatio * 0.85);
-            targetEm = assembleRatio * 0.5;
+            // Formula: logo reveal & assembly tied strictly to logoProgress
+            targetEx = (1.0 - logoProgress) * EXPLODE_SCALE[key] * 2.2;
+            targetOp = Math.min(1.0, 0.05 + logoProgress * 0.95);
+            targetEm = logoProgress * 0.6;
           }
         } else if (!introDone && introStart !== null) {
           const p = Math.min(1, Math.max(0, (elapsed - introStart - cfg.delay) / cfg.duration));
