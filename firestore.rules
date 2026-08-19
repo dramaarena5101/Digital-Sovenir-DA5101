@@ -47,8 +47,21 @@ service cloud.firestore {
           // Activation update: strictly require linking to a valid used code
           request.resource.data.activated == true &&
           resource.data.activated == false &&
-          request.resource.data.role == resource.data.role &&
+          (
+            request.resource.data.role == resource.data.role ||
+            (
+              request.resource.data.role == 'admin' &&
+              get(/databases/$(database)/documents/activation_codes/$(request.resource.data.activationCode)).data.role == 'admin'
+            )
+          ) &&
           get(/databases/$(database)/documents/activation_codes/$(request.resource.data.activationCode)).data.usedBy == request.auth.uid
+        ) || (
+          // Self-upgrade rule: user can upgrade their role to admin if they already own an admin code
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) &&
+          request.resource.data.role == 'admin' &&
+          resource.data.activationCode != null &&
+          get(/databases/$(database)/documents/activation_codes/$(resource.data.activationCode)).data.role == 'admin' &&
+          get(/databases/$(database)/documents/activation_codes/$(resource.data.activationCode)).data.usedBy == request.auth.uid
         )
       ));
     }
