@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAudios, addAudio, deleteAudio, updateAudio } from '@/lib/firestore';
+import { getAudios, addAudio, deleteAudio, updateAudio, reorderAudios } from '@/lib/firestore';
 import { uploadAudioFile } from '@/lib/storage';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Plus, Trash2, X, Upload, Save, Edit2 } from 'lucide-react';
+import { Music, Plus, Trash2, X, Upload, Save, Edit2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { useDialog } from '@/contexts/DialogContext';
 
 const sampleTracks = [
@@ -48,8 +48,13 @@ export default function AdminAudioPage() {
   const [saving, setSaving] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   
+  const [draggedAudioId, setDraggedAudioId] = useState(null);
+  const [dragOverAudioId, setDragOverAudioId] = useState(null);
+  const [hasOrderChanged, setHasOrderChanged] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  
   useEffect(() => { loadAudios(); }, []);
-  const loadAudios = async () => { setLoading(true); try { setAudios(await getAudios()); } catch (e) { console.error(e); } setLoading(false); };
+  const loadAudios = async () => { setLoading(true); try { setAudios(await getAudios()); } catch (e) { console.error(e); } setLoading(false); setHasOrderChanged(false); };
 
   const handleInjectSamples = async () => {
     setLoading(true);
@@ -124,6 +129,43 @@ export default function AdminAudioPage() {
     });
   };
 
+  const handleDragStart = (e, id) => { setDraggedAudioId(id); e.dataTransfer.effectAllowed = 'move'; };
+  const handleDragOver = (e, id) => { e.preventDefault(); if (draggedAudioId !== id) setDragOverAudioId(id); };
+  const handleDragEnd = () => {
+    if (draggedAudioId && dragOverAudioId && draggedAudioId !== dragOverAudioId) {
+      const oldIndex = audios.findIndex(a => a.id === draggedAudioId);
+      const newIndex = audios.findIndex(a => a.id === dragOverAudioId);
+      const newAudios = [...audios];
+      const [moved] = newAudios.splice(oldIndex, 1);
+      newAudios.splice(newIndex, 0, moved);
+      setAudios(newAudios);
+      setHasOrderChanged(true);
+    }
+    setDraggedAudioId(null);
+    setDragOverAudioId(null);
+  };
+
+  const moveAudio = (index, direction) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= audios.length) return;
+    const newAudios = [...audios];
+    const [moved] = newAudios.splice(index, 1);
+    newAudios.splice(newIndex, 0, moved);
+    setAudios(newAudios);
+    setHasOrderChanged(true);
+  };
+
+  const handleSaveOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      await reorderAudios(audios);
+      setHasOrderChanged(false);
+      showToast('Urutan audio berhasil disimpan!', 'success');
+      await loadAudios();
+    } catch (error) { showToast('Gagal menyimpan urutan', 'error'); }
+    setIsSavingOrder(false);
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -146,11 +188,41 @@ export default function AdminAudioPage() {
           <div style={{ padding: 40, textAlign: 'center' }}><Music size={32} color="var(--muted-soft)" style={{ margin: '0 auto 12px' }} /><p className="body-sm" style={{ color: 'var(--muted)' }}>Belum ada audio.</p></div>
         ) : (
           audios.map((audio, i) => (
-            <div key={audio.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: i < audios.length - 1 ? '1px solid var(--hairline-soft)' : 'none' }}>
+            <div 
+              key={audio.id} 
+              draggable
+              onDragStart={(e) => handleDragStart(e, audio.id)}
+              onDragOver={(e) => handleDragOver(e, audio.id)}
+              onDragEnd={handleDragEnd}
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', 
+                borderBottom: i < audios.length - 1 ? '1px solid var(--hairline-soft)' : 'none',
+                opacity: draggedAudioId === audio.id ? 0.5 : 1,
+                borderTop: dragOverAudioId === audio.id ? '2px solid var(--primary)' : 'none',
+                backgroundColor: dragOverAudioId === audio.id ? 'rgba(var(--primary-rgb), 0.05)' : 'transparent',
+                cursor: 'grab'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--muted-soft)' }}>
+                <GripVertical size={16} style={{ cursor: 'grab' }} />
+                <div style={{ fontSize: 11, fontWeight: 700, backgroundColor: 'var(--surface-soft)', padding: '2px 6px', borderRadius: 4 }}>
+                  #{i + 1}
+                </div>
+              </div>
               <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', backgroundColor: 'var(--surface-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Music size={18} color="var(--primary)" />
               </div>
               <div style={{ flex: 1 }}><div className="title-sm">{audio.title}</div>{audio.artist && <div className="caption" style={{ color: 'var(--muted-soft)' }}>{audio.artist}</div>}</div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8 }}>
+                <button className="btn-icon" onClick={() => moveAudio(i, -1)} disabled={i === 0} style={{ width: 28, height: 28, opacity: i === 0 ? 0.3 : 1 }} title="Geser ke atas">
+                  <ArrowUp size={14} />
+                </button>
+                <button className="btn-icon" onClick={() => moveAudio(i, 1)} disabled={i === audios.length - 1} style={{ width: 28, height: 28, opacity: i === audios.length - 1 ? 0.3 : 1 }} title="Geser ke bawah">
+                  <ArrowDown size={14} />
+                </button>
+              </div>
+
               <button className="btn-icon" onClick={() => handleEdit(audio)} style={{ width: 32, height: 32, color: 'var(--primary)' }}><Edit2 size={14} /></button>
               <button className="btn-icon" onClick={() => handleDelete(audio.id)} style={{ width: 32, height: 32, color: 'var(--error)' }}><Trash2 size={14} /></button>
             </div>
@@ -158,6 +230,36 @@ export default function AdminAudioPage() {
         )}
         </div>
       </div>
+
+      {/* Floating Save Order Bar */}
+      <AnimatePresence>
+        {hasOrderChanged && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }} 
+            exit={{ y: 100, opacity: 0 }}
+            style={{ 
+              position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+              backgroundColor: 'var(--surface-card)', padding: '16px 24px', borderRadius: 100,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)', border: '1px solid var(--hairline-soft)',
+              display: 'flex', alignItems: 'center', gap: 24, zIndex: 50
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />
+              <span className="body-sm" style={{ fontWeight: 500 }}>Urutan audio diubah</span>
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-secondary" onClick={() => { setHasOrderChanged(false); loadAudios(); }} style={{ height: 36, padding: '0 16px', fontSize: 13 }} disabled={isSavingOrder}>
+                Batal
+              </button>
+              <button className="btn-primary" onClick={handleSaveOrder} style={{ height: 36, padding: '0 20px', fontSize: 13 }} disabled={isSavingOrder}>
+                {isSavingOrder ? 'Menyimpan...' : 'Simpan Urutan Baru'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showForm && (

@@ -492,6 +492,17 @@ export async function deleteAudio(id) {
   return res;
 }
 
+export async function reorderAudios(orderedAudios) {
+  const batchWrite = writeBatch(db);
+  orderedAudios.forEach((audio, index) => {
+    const audioRef = doc(db, 'audios', audio.id);
+    batchWrite.update(audioRef, { order: index });
+  });
+  await batchWrite.commit();
+  await bumpDataVersion();
+  return { success: true };
+}
+
 // =====================
 // CONTENT: DOCUMENTS
 // =====================
