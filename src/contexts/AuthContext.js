@@ -42,6 +42,39 @@ export function AuthProvider({ children }) {
               }
             }
 
+            // Check if user has an Admin activation code
+            if (finalRole !== 'admin') {
+              try {
+                let codeToQuery = data.activationCode ? data.activationCode.toUpperCase().trim() : null;
+                let isAdminFromCode = false;
+
+                if (codeToQuery) {
+                  const codeSnap = await getDoc(doc(db, 'activation_codes', codeToQuery));
+                  if (codeSnap.exists() && codeSnap.data().role === 'admin') {
+                    isAdminFromCode = true;
+                  }
+                }
+
+                if (!isAdminFromCode) {
+                  const { query, collection, where, getDocs } = await import('firebase/firestore');
+                  const q = query(collection(db, 'activation_codes'), where('usedBy', '==', firebaseUser.uid), where('role', '==', 'admin'));
+                  const qSnap = await getDocs(q);
+                  if (!qSnap.empty) {
+                    isAdminFromCode = true;
+                  }
+                }
+
+                if (isAdminFromCode) {
+                  finalRole = 'admin';
+                  import('firebase/firestore').then(({ updateDoc }) => {
+                    updateDoc(userRef, { role: 'admin' }).catch(() => {});
+                  });
+                }
+              } catch (errCodeCheck) {
+                console.warn("Notice: Error checking admin activation code status:", errCodeCheck);
+              }
+            }
+
             setUserData({ ...data, role: finalRole, activated: finalActivated });
             setIsActivated(finalActivated === true);
             setIsAdmin(finalRole === 'admin');
