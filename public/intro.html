@@ -1888,9 +1888,9 @@
             targetOp = 1.0;
             targetEm = 0.8 + centerStarFlash;
           } else {
-            // Formula: logo reveal & assembly tied strictly to logoProgress
-            targetEx = (1.0 - logoProgress) * EXPLODE_SCALE[key] * 2.2;
-            targetOp = Math.min(1.0, 0.05 + logoProgress * 0.95);
+            // NO SCATTERING (targetEx = 0)! As currentHits goes 0 -> 101, logo parts fade in smoothly from 0 opacity to 1.0!
+            targetEx = 0;
+            targetOp = logoProgress;
             targetEm = logoProgress * 0.6;
           }
         } else if (!introDone && introStart !== null) {
@@ -1976,7 +1976,7 @@
         }
 
         const targetSpin = Math.round(rt.spin / (Math.PI * 2)) * Math.PI * 2;
-        if (introDone) {
+        if (introDone || document.body.classList.contains('puzzle-mode')) {
           rt.spinVel += (targetSpin - rt.spin) * 60 * dt; rt.spinVel *= Math.exp(-8 * dt); rt.spin += rt.spinVel * dt;
         } else if (!isPuzzleActive) {
           // Snap to 0 gently if awakening
