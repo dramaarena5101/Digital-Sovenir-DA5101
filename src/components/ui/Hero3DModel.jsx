@@ -142,53 +142,27 @@ function Model({ url, scatterIdle, inline, animateOnMount, hideSparkles, modelPo
     }
   };
 
-  // Handle Intro Animation or animateOnMount
+  // Ensure model starts fully assembled immediately without scattering animation
   useEffect(() => {
-    if (introCompleted && !animateOnMount) return;
+    if (!pieces || pieces.length === 0) return;
     
-    // Spread pieces randomly at the start from far away
     pieces.forEach((piece) => {
       piece.position.set(
-        piece.userData.initPos.x + (Math.random() - 0.5) * 30,
-        piece.userData.initPos.y + (Math.random() - 0.5) * 30,
-        piece.userData.initPos.z + (Math.random() - 0.5) * 30
+        piece.userData.initPos.x,
+        piece.userData.initPos.y,
+        piece.userData.initPos.z
       );
       piece.rotation.set(
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI
+        piece.userData.initRot.x,
+        piece.userData.initRot.y,
+        piece.userData.initRot.z
       );
-      piece.userData.isAnimating = true;
+      piece.userData.isAnimating = false;
     });
-
-    // Animate back to original
-    const tl = gsap.timeline({
-      onComplete: () => {
-        pieces.forEach(p => p.userData.isAnimating = false);
-        if (!animateOnMount) setIntroCompleted(true);
-      }
-    });
-
-    pieces.forEach((piece, i) => {
-      // Find the center diamond (assuming it's the last piece or central piece)
-      const isCenter = i === pieces.length - 1; 
-      
-      tl.to(piece.position, {
-        x: piece.userData.initPos.x,
-        y: piece.userData.initPos.y,
-        z: piece.userData.initPos.z,
-        duration: isCenter ? 2.5 : 1.5 + Math.random() * 1,
-        ease: "power3.out"
-      }, isCenter ? 0.5 : 0);
-      
-      tl.to(piece.rotation, {
-        x: piece.userData.initRot.x,
-        y: piece.userData.initRot.y,
-        z: piece.userData.initRot.z,
-        duration: isCenter ? 2.5 : 1.5 + Math.random() * 1,
-        ease: "power3.out"
-      }, isCenter ? 0.5 : 0);
-    });
+    
+    if (!introCompleted) {
+      setIntroCompleted(true);
+    }
   }, [pieces, introCompleted, setIntroCompleted]);
 
   // Handle Activation Assembly Animation

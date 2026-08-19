@@ -507,7 +507,7 @@
   </style>
 </head>
 
-<body class="puzzle-mode">
+<body>
 
   <!-- ========================================== -->
   <!-- 🎵 EDIT NAMA FILE AUDIO ANDA DI SINI 🎵 -->
@@ -555,7 +555,7 @@
     <div class="lbl" id="loaderlbl">Selamat Datang</div>
   </div>
 
-  <img id="puzzle-blueprint" src="logo-flat.png" alt="Blueprint">
+  <img id="puzzle-blueprint" src="logo-flat.png" alt="Blueprint" style="display:none;">
 
   <!-- 3D Background Canvas -->
   <div class="spot"></div>
@@ -590,7 +590,7 @@
         <h1>Drama<br>Arena<br>5101</h1>
         <p class="hero-sub">Satu bingkai, empat penjuru, satu jiwa yang menyala di tengah panggung.</p>
       </div>
-      <div class="scrollcue"><span class="chev">↓</span> Gulir untuk merakit lambang</div>
+      <div class="scrollcue"><span class="chev">↓</span> Gulir untuk menjelajahi</div>
     </section>
 
     <section class="step align-right" id="step-1">
@@ -1163,7 +1163,7 @@
           };
           explodeDir[key] = dirs[key];
         }
-        runtime[key].ex = EXPLODE_SCALE[key] * 1.6;
+        runtime[key].ex = 0;
         obj.scale.copy(obj.userData.baseScale).multiplyScalar(0.55);
       });
       onReady();
@@ -1179,9 +1179,10 @@
       loaderEl.style.opacity = '0';
       setTimeout(() => {
         loaderEl.style.display = 'none';
-        document.body.classList.add('show-blueprint');
-        isPuzzleActive = true;
-        document.getElementById('puzzle-instruction').style.opacity = '1';
+        isPuzzleActive = false;
+        if (document.getElementById('puzzle-instruction')) {
+          document.getElementById('puzzle-instruction').style.display = 'none';
+        }
         
         const welcomeAudio = document.getElementById('custom-welcome-sfx');
         if (welcomeAudio) {
