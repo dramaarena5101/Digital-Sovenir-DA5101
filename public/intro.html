@@ -610,7 +610,7 @@
 
     .combat-counter-display {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 6px;
       background: rgba(10, 8, 16, 0.85);
       backdrop-filter: blur(10px);
@@ -629,55 +629,76 @@
       letter-spacing: 0.1em;
     }
 
+    /* 🔥 SPECTACULAR FIRE FLAME SYSTEM FOR HIT COUNTER 🔥 */
     .combat-hit-val {
       font-family: var(--disp);
-      font-size: 28px;
-      font-weight: 800;
+      font-size: 30px;
+      font-weight: 900;
       color: #ffffff;
       line-height: 1;
       text-shadow: 0 0 10px rgba(255, 90, 34, 0.4);
       transition: color 0.2s ease, text-shadow 0.2s ease, transform 0.1s ease;
       display: inline-block;
+      position: relative;
     }
 
-    /* 🔥 DYNAMIC FIRE ANIMATIONS FOR HIT COUNTER 🔥 */
     .combat-hit-val.fire-tier-1 {
       color: #ffaa00;
-      text-shadow: 0 0 14px #ff5a22, 0 -3px 10px #ffaa00;
+      text-shadow: 0 0 12px #ff5a22, 0 -3px 10px #ffaa00, 0 -6px 18px rgba(255, 90, 34, 0.7);
+      animation: flameFlickerLight 0.4s infinite alternate ease-in-out;
     }
 
     .combat-hit-val.fire-tier-2 {
-      color: #ff5a22;
-      animation: flamePulse 0.35s infinite alternate ease-in-out;
+      background: linear-gradient(180deg, #ffffff 0%, #ffaa00 40%, #ff3a12 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 16px #ff3a12, 0 -6px 20px #ffaa00, 0 -12px 30px rgba(255, 58, 18, 0.9);
+      animation: flameFlickerMedium 0.25s infinite alternate ease-in-out;
+      transform: scale(1.1);
     }
 
     .combat-hit-val.fire-tier-max {
-      color: #ffffff;
-      animation: fireSupernova 0.25s infinite alternate ease-in-out;
+      background: linear-gradient(180deg, #ffffff 0%, #ffee00 25%, #ff5a22 65%, #ff0000 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 12px #ff3a12) drop-shadow(0 -8px 25px #ffaa00) drop-shadow(0 -16px 35px #ffee00);
+      animation: flameSupernova 0.18s infinite alternate ease-in-out;
+      transform: scale(1.25);
     }
 
-    @keyframes flamePulse {
+    .fire-badge-icon {
+      font-size: 18px;
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: fireBadgeBounce 0.3s infinite alternate cubic-bezier(0.17, 0.67, 0.83, 0.67);
+      display: inline-block;
+      filter: drop-shadow(0 0 8px #ff5a22);
+    }
+
+    @keyframes flameFlickerLight {
+      0% { text-shadow: 0 0 12px #ff5a22, 0 -3px 10px #ffaa00; transform: scale(1.0); }
+      100% { text-shadow: 0 0 18px #ff3a12, 0 -6px 16px #ffee00; transform: scale(1.05); }
+    }
+
+    @keyframes flameFlickerMedium {
+      0% { filter: drop-shadow(0 0 12px #ff5a22) drop-shadow(0 -6px 18px #ffaa00); transform: scale(1.08) rotate(-1deg); }
+      100% { filter: drop-shadow(0 0 22px #ff0000) drop-shadow(0 -10px 28px #ffee00); transform: scale(1.16) rotate(1deg); }
+    }
+
+    @keyframes flameSupernova {
       0% {
-        text-shadow: 0 0 12px #ff5a22, 0 -4px 14px #ffaa00, 0 -8px 22px rgba(255, 58, 18, 0.85);
-        transform: scale(1.04);
+        filter: drop-shadow(0 0 18px #ff0000) drop-shadow(0 -10px 30px #ffaa00) drop-shadow(0 -20px 45px #ffee00);
+        transform: scale(1.20) rotate(-2deg);
       }
       100% {
-        text-shadow: 0 0 20px #ff3a12, 0 -7px 20px #ffee00, 0 -14px 30px rgba(255, 170, 0, 0.95);
-        transform: scale(1.12);
+        filter: drop-shadow(0 0 30px #ff3a12) drop-shadow(0 -14px 40px #ffee00) drop-shadow(0 -28px 60px #ffffff);
+        transform: scale(1.32) rotate(2deg);
       }
     }
 
-    @keyframes fireSupernova {
-      0% {
-        text-shadow: 0 0 16px #ff0000, 0 -8px 24px #ffaa00, 0 -16px 36px #ffffff, 0 0 45px #ff3a12;
-        filter: brightness(1.3);
-        transform: scale(1.15) rotate(-2deg);
-      }
-      100% {
-        text-shadow: 0 0 28px #ff3a12, 0 -12px 35px #ffee00, 0 -22px 50px #ffffff, 0 0 75px #ffaa00;
-        filter: brightness(1.7);
-        transform: scale(1.22) rotate(2deg);
-      }
+    @keyframes fireBadgeBounce {
+      0% { transform: translateY(0) scale(1); filter: brightness(1.0); }
+      100% { transform: translateY(-4px) scale(1.25); filter: brightness(1.6); }
     }
 
     .combat-max-label {
@@ -744,7 +765,7 @@
   <!-- 12. transition: Suara desiran halus/magis saat layar memutih dan pindah ke halaman utama -->
   <audio id="custom-transition-sfx" src="/transition.mp3" preload="auto"></audio>
   
-  <!-- 💥 BORDERLESS COMBAT HUD 💥 -->
+  <!-- 💥 BORDERLESS COMBAT HUD WITH FIRE AURA 💥 -->
   <div id="tap-game-overlay" class="combat-hud-container">
     <div id="combat-objective-text" class="combat-objective-pill">
       ⚡ KETUK BINTANG TENGAH 101 KALI UNTUK MENYUSUN LOGO!
@@ -758,6 +779,7 @@
       <div id="combat-counter-box" class="combat-counter-display">
         <span class="combat-hit-label">HIT</span>
         <span id="combat-hit-number" class="combat-hit-val">0</span>
+        <span id="fire-badge-el" class="fire-badge-icon" style="display: none;">🔥</span>
         <span class="combat-max-label">/ 101</span>
       </div>
 
@@ -1205,15 +1227,22 @@
         const hits = Math.floor(val);
         numEl.textContent = hits;
 
+        const fireBadge = document.getElementById("fire-badge-el");
+
         // Dynamic fire aura progression as hits approach 101
         numEl.classList.remove("fire-tier-1", "fire-tier-2", "fire-tier-max");
 
         if (hits >= 90) {
           numEl.classList.add("fire-tier-max");
+          if (fireBadge) { fireBadge.style.display = "inline-block"; fireBadge.textContent = "🔥💥🔥"; }
         } else if (hits >= 60) {
           numEl.classList.add("fire-tier-2");
+          if (fireBadge) { fireBadge.style.display = "inline-block"; fireBadge.textContent = "🔥🔥"; }
         } else if (hits >= 25) {
           numEl.classList.add("fire-tier-1");
+          if (fireBadge) { fireBadge.style.display = "inline-block"; fireBadge.textContent = "🔥"; }
+        } else {
+          if (fireBadge) { fireBadge.style.display = "none"; }
         }
       }
 
