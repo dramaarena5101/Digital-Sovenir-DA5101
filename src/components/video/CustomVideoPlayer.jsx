@@ -16,6 +16,7 @@ import {
   Loader2,
   ChevronRight,
   ChevronLeft,
+  Captions,
 } from 'lucide-react';
 
 function getCleanVideoInfo(rawUrl) {
@@ -81,10 +82,11 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
   const [error, setError] = useState(false);
   const [ended, setEnded] = useState(false);
 
-  // Settings menu & Volume hover states
+  // Settings menu, Subtitles & Volume hover states
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [settingsTab, setSettingsTab] = useState('main'); // 'main' | 'quality' | 'speed'
+  const [settingsTab, setSettingsTab] = useState('main'); // 'main' | 'quality' | 'speed' | 'subtitles'
   const [quality, setQuality] = useState('auto');
+  const [subtitleTrack, setSubtitleTrack] = useState('off'); // 'off' | 'id' | 'en'
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   // Hover tooltip state for seek bar
@@ -293,7 +295,7 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
     return `${pad(mins)}:${pad(secs)}`;
   };
 
-  // Speed & Quality Selector
+  // Speed, Quality & Subtitle Selectors
   const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
   const qualities = [
     { id: 'auto', label: 'Otomatis', badge: 'HD' },
@@ -301,6 +303,11 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
     { id: '720p', label: '720p', badge: 'HD' },
     { id: '480p', label: '480p', badge: 'SD' },
     { id: '360p', label: '360p', badge: 'SD' },
+  ];
+  const subtitleOptions = [
+    { id: 'off', label: 'Nonaktif' },
+    { id: 'id', label: 'Bahasa Indonesia' },
+    { id: 'en', label: 'English' },
   ];
 
   const handleSpeedSelect = (rate, e) => {
@@ -323,6 +330,36 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
       }
     } catch (err) {
       console.log('Quality change requested:', qId);
+    }
+  };
+
+  const handleSubtitleSelect = (subId, e) => {
+    if (e) e.stopPropagation();
+    setSubtitleTrack(subId);
+    setSettingsTab('main');
+    setShowSettingsMenu(false);
+
+    try {
+      const internal = playerRef.current?.getInternalPlayer();
+      if (internal) {
+        if (subId === 'off') {
+          if (typeof internal.unloadModule === 'function') {
+            internal.unloadModule('captions');
+          }
+          if (typeof internal.setOption === 'function') {
+            internal.setOption('captions', 'track', {});
+          }
+        } else {
+          if (typeof internal.loadModule === 'function') {
+            internal.loadModule('captions');
+          }
+          if (typeof internal.setOption === 'function') {
+            internal.setOption('captions', 'track', { languageCode: subId });
+          }
+        }
+      }
+    } catch (err) {
+      console.log('Subtitle change requested:', subId);
     }
   };
 
@@ -458,7 +495,8 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                 disablekb: 1,
                 iv_load_policy: 3,
                 fs: 0,
-                cc_load_policy: 0,
+                cc_load_policy: subtitleTrack !== 'off' ? 1 : 0,
+                cc_lang_pref: subtitleTrack !== 'off' ? subtitleTrack : undefined,
                 autohide: 1,
               },
             },
@@ -537,7 +575,7 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
         </div>
       )}
 
-      {/* LOADING / BUFFERING SPINNER */}
+      {/* LOADING / BUFFERING SPINNER (NO DUPLICATE STACKING) */}
       {isBuffering && !error && !ended && (
         <div
           style={{
@@ -550,11 +588,16 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
             justifyContent: 'center',
             gap: 12,
             pointerEvents: 'none',
-            backgroundColor: played === 0 ? 'rgba(0,0,0,0.85)' : 'transparent',
+            backgroundColor: played === 0 ? '#000000' : (videoInfo.type === 'youtube' ? 'transparent' : 'rgba(0,0,0,0.5)'),
+            backdropFilter: played === 0 ? 'blur(8px)' : 'none',
           }}
         >
-          <Loader2 size={48} color="#FF6B00" className="animate-spin" />
-          <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 500 }}>Memuat Video...</span>
+          {!(videoInfo.type === 'youtube' && played > 0) && (
+            <>
+              <Loader2 size={44} color="#FF6B00" className="animate-spin" />
+              <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-body)' }}>Memuat Video...</span>
+            </>
+          )}
         </div>
       )}
 
@@ -905,6 +948,38 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                           <ChevronRight size={14} color="rgba(255,255,255,0.5)" />
                         </div>
                       </button>
+                      {/* Subtitle menu item */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSettingsTab('subtitles'); }}
+                        style={{
+                          padding: '10px 14px',
+                          background: 'none',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.9)' }}>
+                          <Captions size={15} color="rgba(255,255,255,0.7)" />
+                          <span>Subtitle (CC)</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#FF6B00', fontSize: 12 }}>
+                          <span>
+                            {subtitleTrack === 'off'
+                              ? 'Nonaktif'
+                              : subtitleOptions.find((s) => s.id === subtitleTrack)?.label || 'Aktif'}
+                          </span>
+                          <ChevronRight size={14} color="rgba(255,255,255,0.5)" />
+                        </div>
+                      </button>
                     </>
                   )}
 
@@ -1006,6 +1081,56 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
                         >
                           <span>{rate === 1.0 ? 'Normal (1.0x)' : `${rate}x`}</span>
                           {playbackRate === rate && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF6B00' }} />}
+                        </button>
+                      ))}
+                    </>
+                  )}
+
+                  {/* SUBTITLES TAB */}
+                  {settingsTab === 'subtitles' && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSettingsTab('main'); }}
+                        style={{
+                          padding: '6px 12px 8px',
+                          background: 'none',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          color: 'white',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <ChevronLeft size={14} />
+                        <span>Subtitle / Teks</span>
+                      </button>
+
+                      {subtitleOptions.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={(e) => handleSubtitleSelect(sub.id, e)}
+                          style={{
+                            padding: '8px 14px',
+                            background: subtitleTrack === sub.id ? 'rgba(255, 107, 0, 0.15)' : 'none',
+                            border: 'none',
+                            color: subtitleTrack === sub.id ? '#FF6B00' : 'white',
+                            fontSize: 13,
+                            fontWeight: subtitleTrack === sub.id ? 600 : 400,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                          onMouseEnter={(e) => { if (subtitleTrack !== sub.id) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
+                          onMouseLeave={(e) => { if (subtitleTrack !== sub.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                        >
+                          <span>{sub.label}</span>
+                          {subtitleTrack === sub.id && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#FF6B00' }} />}
                         </button>
                       ))}
                     </>
