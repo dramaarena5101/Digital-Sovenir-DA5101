@@ -141,7 +141,7 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
   };
 
   const handleMouseLeave = () => {
-    if (playing && !showSpeedMenu && !seeking) {
+    if (playing && !showSettingsMenu && !seeking) {
       hideControlsTimer.current = setTimeout(() => {
         setShowControls(false);
       }, 1000);
@@ -620,10 +620,10 @@ export default function CustomVideoPlayer({ videoUrl, title, poster }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
-          opacity: showControls || !playing || showSpeedMenu ? 1 : 0,
-          transform: showControls || !playing || showSpeedMenu ? 'translateY(0)' : 'translateY(12px)',
+          opacity: showControls || !playing || showSettingsMenu ? 1 : 0,
+          transform: showControls || !playing || showSettingsMenu ? 'translateY(0)' : 'translateY(12px)',
           transition: 'opacity 0.3s ease, transform 0.3s ease',
-          pointerEvents: showControls || !playing || showSpeedMenu ? 'auto' : 'none',
+          pointerEvents: showControls || !playing || showSettingsMenu ? 'auto' : 'none',
         }}
       >
         {/* CUSTOM SEEK / PROGRESS BAR */}
