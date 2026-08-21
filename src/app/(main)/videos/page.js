@@ -151,33 +151,40 @@ export default function VideosPage() {
     v.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Helper to get array of categories from a string or array
-  const getVideoCategories = (categoryData) => {
-    if (!categoryData) return [];
-    let arr = Array.isArray(categoryData) ? categoryData : categoryData.split(',');
-    return arr.map(s => s.trim().toLowerCase()).filter(Boolean);
+  // Urutan acara / timeline grouping
+  const sortedFiltered = [...filteredVideos].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  const getBabak = (catStr) => {
+    const s = (catStr || '').toLowerCase().replace(/\s+/g, '');
+    if (s.includes('babak1')) return 'Babak 1';
+    if (s.includes('babak2')) return 'Babak 2';
+    if (s.includes('babak3')) return 'Babak 3';
+    if (s.includes('babak4')) return 'Babak 4';
+    return null;
   };
 
-  // Dynamically extract all unique categories from the videos
-  const allCats = filteredVideos.flatMap(v => getVideoCategories(v.category));
-  const uniqueCategories = [...new Set(allCats)];
-  
-  // Map them to objects with labels
-  const allCategoryLabels = uniqueCategories.map(cat => {
-    // Also lowercase settings value for robust matching
-    const settingCat = settingCategories.find(c => c.value?.toLowerCase() === cat);
-    return settingCat ? settingCat : { value: cat, label: cat.charAt(0).toUpperCase() + cat.slice(1) }; // fallback
+  const timelineGroups = [];
+  let currentGroupTitle = 'Pra-Acara';
+  let currentGroupVideos = [];
+
+  sortedFiltered.forEach(video => {
+    const babak = getBabak(video.category);
+    // Jika kita masuk ke babak baru, buat grup baru
+    if (babak && babak !== currentGroupTitle) {
+      if (currentGroupVideos.length > 0) {
+         timelineGroups.push({ label: currentGroupTitle, value: currentGroupTitle, videos: currentGroupVideos });
+      }
+      currentGroupTitle = babak;
+      currentGroupVideos = [];
+    }
+    currentGroupVideos.push(video);
   });
-
-  const groupedVideos = allCategoryLabels.map(cat => ({
-    ...cat,
-    videos: filteredVideos.filter(v => getVideoCategories(v.category).includes(cat.value))
-  })).filter(g => g.videos.length > 0);
-
-  const uncatVideos = filteredVideos.filter(v => getVideoCategories(v.category).length === 0);
-  if (uncatVideos.length > 0) {
-    groupedVideos.push({ value: 'other', label: 'Lainnya', videos: uncatVideos });
+  
+  if (currentGroupVideos.length > 0) {
+    timelineGroups.push({ label: currentGroupTitle, value: currentGroupTitle, videos: currentGroupVideos });
   }
+
+  const groupedVideos = timelineGroups;
 
   return (
     <div style={{ 

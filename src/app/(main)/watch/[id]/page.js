@@ -66,12 +66,19 @@ export default function WatchPage() {
 
         setVideo(currentVideo);
 
-        // Get suggested videos (same category, excluding current)
-        let suggested = allVideos.filter(v => v.id !== id && v.category === currentVideo.category);
-        if (suggested.length === 0) {
-          suggested = allVideos.filter(v => v.id !== id).slice(0, 5); // Fallback if no same category
+        // Sort videos by order to determine the next events in the run of show
+        const sortedVideos = [...allVideos].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const currentIndex = sortedVideos.findIndex(v => v.id === id);
+        
+        let suggested = [];
+        if (currentIndex !== -1 && currentIndex < sortedVideos.length - 1) {
+          // Get the next videos in order
+          suggested = sortedVideos.slice(currentIndex + 1, currentIndex + 11);
+        } else if (sortedVideos.length > 1) {
+          // If it's the last video, maybe show the first ones as fallback
+          suggested = sortedVideos.slice(0, 10).filter(v => v.id !== id);
         }
-        setSuggestedVideos(suggested.slice(0, 10)); // Max 10
+        setSuggestedVideos(suggested);
 
         // Fetch comments
         fetchComments();
@@ -218,7 +225,7 @@ export default function WatchPage() {
 
         {/* MIDDLE SECTION: Suggest Videos (Episodes) */}
         <div>
-          <h3 style={{ fontSize: 20, fontWeight: 700, color: 'white', marginBottom: 16 }}>Episode Selanjutnya</h3>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: 'white', marginBottom: 16 }}>Acara Selanjutnya</h3>
           
           <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, scrollbarWidth: 'thin', scrollbarColor: '#444 transparent' }}>
             {suggestedVideos.map((sVideo, index) => (
@@ -240,7 +247,7 @@ export default function WatchPage() {
                     {sVideo.category}
                   </div>
                   <div style={{ position: 'absolute', top: 4, left: 4, backgroundColor: 'rgba(255,107,0,0.9)', color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                    Ep {index + 1}
+                    Urutan {sVideo.order || index + 1}
                   </div>
                 </div>
 
