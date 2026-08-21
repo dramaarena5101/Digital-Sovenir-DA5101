@@ -17,6 +17,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { FALLBACK_VIDEOS, FALLBACK_AUDIOS, FALLBACK_DOCUMENTS, FALLBACK_PHOTOS } from './fallbackData';
 
 // =====================
 // DATA VERSIONING
@@ -252,7 +253,7 @@ export async function getVideos(category) {
       const cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) return JSON.parse(cachedData);
     }
-    return [];
+    return FALLBACK_VIDEOS;
   }
 }
 
@@ -485,7 +486,7 @@ export async function getAudios() {
       const cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) return JSON.parse(cachedData);
     }
-    return [];
+    return FALLBACK_AUDIOS;
   }
 }
 
@@ -557,7 +558,7 @@ export async function getDocuments() {
       const cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) return JSON.parse(cachedData);
     }
-    return [];
+    return FALLBACK_DOCUMENTS;
   }
 }
 
