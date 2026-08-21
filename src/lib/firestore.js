@@ -227,24 +227,33 @@ export async function getVideos(category) {
     }
   }
 
-  // Jika versi beda atau cache belum ada, ambil semua data terbaru
-  let q;
-  if (category && category !== 'all') {
-    q = query(collection(db, 'videos'), where('category', '==', category));
-  } else {
-    q = query(collection(db, 'videos'));
+  // Jika versi beda atau cache belum ada, ambil semua data terbaru dari Firestore
+  try {
+    let q;
+    if (category && category !== 'all') {
+      q = query(collection(db, 'videos'), where('category', '==', category));
+    } else {
+      q = query(collection(db, 'videos'));
+    }
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const sortedData = data.sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    if (typeof window !== 'undefined') {
+      const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+      localStorage.setItem(CACHE_KEY, JSON.stringify(sortedData));
+      localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+    }
+    
+    return sortedData;
+  } catch (err) {
+    console.warn("Notice: Firestore read error or quota exceeded (getVideos). Falling back to cached data:", err);
+    if (typeof window !== 'undefined') {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) return JSON.parse(cachedData);
+    }
+    return [];
   }
-  const snap = await getDocs(q);
-  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  const sortedData = data.sort((a, b) => (a.order || 0) - (b.order || 0));
-  
-  if (typeof window !== 'undefined') {
-    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
-    localStorage.setItem(CACHE_KEY, JSON.stringify(sortedData));
-    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
-  }
-  
-  return sortedData;
 }
 
 export async function addVideo(data) {
@@ -458,17 +467,26 @@ export async function getAudios() {
     }
   }
 
-  const q = query(collection(db, 'audios'), orderBy('order', 'asc'));
-  const snap = await getDocs(q);
-  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  
-  if (typeof window !== 'undefined') {
-    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
-    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+  try {
+    const q = query(collection(db, 'audios'), orderBy('order', 'asc'));
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    
+    if (typeof window !== 'undefined') {
+      const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+    }
+    
+    return data;
+  } catch (err) {
+    console.warn("Notice: Firestore read error or quota exceeded (getAudios). Falling back to cached data:", err);
+    if (typeof window !== 'undefined') {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) return JSON.parse(cachedData);
+    }
+    return [];
   }
-  
-  return data;
 }
 
 export async function addAudio(data) {
@@ -521,17 +539,26 @@ export async function getDocuments() {
     }
   }
 
-  const q = query(collection(db, 'documents'), orderBy('createdAt', 'desc'));
-  const snap = await getDocs(q);
-  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  
-  if (typeof window !== 'undefined') {
-    const globalVersion = localStorage.getItem('da_global_data_version') || '1';
-    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-    localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+  try {
+    const q = query(collection(db, 'documents'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    
+    if (typeof window !== 'undefined') {
+      const globalVersion = localStorage.getItem('da_global_data_version') || '1';
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(VERSION_CACHE_KEY, globalVersion);
+    }
+    
+    return data;
+  } catch (err) {
+    console.warn("Notice: Firestore read error or quota exceeded (getDocuments). Falling back to cached data:", err);
+    if (typeof window !== 'undefined') {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) return JSON.parse(cachedData);
+    }
+    return [];
   }
-  
-  return data;
 }
 
 export async function addDocument(data) {
