@@ -47,12 +47,52 @@ export default function GalleryPage() {
     photoCategories.find(c => c.value === photo.category)?.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDownload = (e, imageUrl) => {
+  const handleDownload = (e, imageUrl, title = 'foto-da5101') => {
     e.stopPropagation();
+    if (!imageUrl) return;
+
+    const fileName = `${(title || 'foto-da5101').toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`;
+
+    // 1. Direct Blob Download via Canvas (bypasses Google 429 download quota & saves directly to user's device)
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            fallbackOpen(imageUrl);
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }, 'image/jpeg', 0.95);
+      } catch (err) {
+        fallbackOpen(imageUrl);
+      }
+    };
+    img.onerror = () => {
+      fallbackOpen(imageUrl);
+    };
+    img.src = imageUrl;
+  };
+
+  const fallbackOpen = (imageUrl) => {
     let dlUrl = imageUrl;
-    const match = imageUrl.match(/id=([^&]+)/);
+    const match = imageUrl.match(/id=([a-zA-Z0-9_-]+)/) || imageUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
     if (match) {
-      dlUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+      // Use official Google Drive View URL which never returns 429 Too Many Requests
+      dlUrl = `https://drive.google.com/file/d/${match[1]}/view?usp=sharing`;
     }
     window.open(dlUrl, '_blank');
   };
@@ -153,7 +193,7 @@ export default function GalleryPage() {
                   {heroPhoto.title || 'Momen Terbaik'}
                 </h1>
                 <button 
-                  onClick={(e) => handleDownload(e, heroPhoto.imageUrl)}
+                  onClick={(e) => handleDownload(e, heroPhoto.imageUrl, heroPhoto.title)}
                   className="btn-primary"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 28px', backgroundColor: 'white', color: 'black', border: 'none', fontWeight: 600, borderRadius: 'var(--radius-full)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
                 >
@@ -281,7 +321,7 @@ export default function GalleryPage() {
                   {photo.title || 'Foto'}
                 </h3>
                 <button 
-                  onClick={(e) => handleDownload(e, photo.imageUrl)}
+                  onClick={(e) => handleDownload(e, photo.imageUrl, photo.title)}
                   className="btn-primary"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -354,7 +394,7 @@ export default function GalleryPage() {
               ×
             </button>
             <button 
-              onClick={(e) => handleDownload(e, selectedPhoto.imageUrl)}
+              onClick={(e) => handleDownload(e, selectedPhoto.imageUrl, selectedPhoto.title)}
               style={{
                 position: 'absolute',
                 bottom: 32,
