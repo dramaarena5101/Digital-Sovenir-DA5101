@@ -11,7 +11,7 @@ const SettingsContext = createContext({});
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({
-    theme: 'default',
+    theme: 'guidebook',
     logoUrl: '',
     faviconUrl: '',
     heroImageUrl: '',
@@ -28,8 +28,9 @@ export function SettingsProvider({ children }) {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        const activeTheme = data.theme || 'guidebook';
         setSettings({
-          theme: data.theme || 'default',
+          theme: activeTheme,
           logoUrl: data.logoUrl || '',
           faviconUrl: data.faviconUrl || '',
           heroImageUrl: data.heroImageUrl || '',
@@ -53,7 +54,7 @@ export function SettingsProvider({ children }) {
         
         // Apply theme data attribute to the <html> tag for CSS variables to kick in
         if (typeof document !== 'undefined') {
-          document.documentElement.setAttribute('data-theme', data.theme || 'default');
+          document.documentElement.setAttribute('data-theme', activeTheme);
           
           if (data.faviconUrl) {
             let link = document.querySelector("link[rel~='icon']");
@@ -67,11 +68,14 @@ export function SettingsProvider({ children }) {
         }
       } else {
         // Create default settings document if it doesn't exist
-        setDoc(docRef, { theme: 'default' }, { merge: true });
+        setDoc(docRef, { theme: 'guidebook' }, { merge: true });
       }
       setLoading(false);
     }, (error) => {
       console.error("Error fetching settings:", error);
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', 'guidebook');
+      }
       setLoading(false);
     });
 
