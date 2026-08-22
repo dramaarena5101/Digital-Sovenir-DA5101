@@ -109,7 +109,8 @@ export default function VideosPage() {
     setLoading(true);
     try {
       const data = await getVideos('all');
-      setVideos(data);
+      const readyVideos = data.filter(v => v.isReady !== false);
+      setVideos(readyVideos);
     } catch (error) {
       console.error('Error loading videos:', error);
     }

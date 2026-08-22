@@ -33,7 +33,7 @@ export default function BonusPage() {
         getVideos('bonus'),
         getPhotos('backstage'),
       ]);
-      setVideos(bonusVideos);
+      setVideos(bonusVideos.filter(v => v.isReady !== false));
       setPhotos(btsPhotos);
     } catch (error) {
       console.error('Error loading bonus content:', error);

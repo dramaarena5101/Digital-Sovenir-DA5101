@@ -59,15 +59,18 @@ export default function WatchPage() {
         const allVideos = await getVideos();
         const currentVideo = allVideos.find(v => v.id === id);
         
-        if (!currentVideo) {
+        if (!currentVideo || (currentVideo.isReady === false && !isAdmin)) {
           router.push('/videos');
           return;
         }
 
         setVideo(currentVideo);
 
+        // Filter only ready videos for suggestions
+        const readyVideos = allVideos.filter(v => v.isReady !== false);
+
         // Sort videos by order to determine the next events in the run of show
-        const sortedVideos = [...allVideos].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const sortedVideos = [...readyVideos].sort((a, b) => (a.order || 0) - (b.order || 0));
         const currentIndex = sortedVideos.findIndex(v => v.id === id);
         
         let suggested = [];

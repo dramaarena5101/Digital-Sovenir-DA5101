@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getVideos, addVideo, updateVideo, deleteVideo, reorderVideos } from '@/lib/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Plus, Edit, Trash2, X, Save, Search, Play, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Video, Plus, Edit, Trash2, X, Save, Search, Play, GripVertical, ArrowUp, ArrowDown, CheckCircle2, Clock } from 'lucide-react';
 import { getVideoEmbedUrl, getVideoThumbnailUrl } from '@/lib/utils';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useDialog } from '@/contexts/DialogContext';
@@ -17,7 +17,7 @@ export default function AdminVideosPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingVideo, setEditingVideo] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '', videoUrl: '', thumbnailUrl: '', category: '', order: 0 });
+  const [form, setForm] = useState({ title: '', description: '', videoUrl: '', thumbnailUrl: '', category: '', order: 0, isReady: true });
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -111,12 +111,48 @@ export default function AdminVideosPage() {
     const defaultCat = videoCategories.length > 0 ? videoCategories[0].value : '';
     if (video) {
       setEditingVideo(video);
-      setForm({ title: video.title, description: video.description || '', videoUrl: video.videoUrl, thumbnailUrl: video.thumbnailUrl || '', category: Array.isArray(video.category) ? video.category.join(', ') : (video.category || ''), order: video.order || 0 });
+      setForm({ 
+        title: video.title, 
+        description: video.description || '', 
+        videoUrl: video.videoUrl, 
+        thumbnailUrl: video.thumbnailUrl || '', 
+        category: Array.isArray(video.category) ? video.category.join(', ') : (video.category || ''), 
+        order: video.order || 0,
+        isReady: video.isReady !== false
+      });
     } else {
       setEditingVideo(null);
-      setForm({ title: '', description: '', videoUrl: '', thumbnailUrl: '', category: '', order: videos.length });
+      setForm({ title: '', description: '', videoUrl: '', thumbnailUrl: '', category: '', order: videos.length, isReady: true });
     }
     setShowForm(true);
+  };
+
+  const handleToggleReady = async (video) => {
+    const newStatus = video.isReady === false ? true : false;
+    try {
+      await updateVideo(video.id, { isReady: newStatus });
+      setVideos(prev => prev.map(v => v.id === video.id ? { ...v, isReady: newStatus } : v));
+      showToast(newStatus ? 'Status video diubah menjadi Ready' : 'Status video diubah menjadi Belum Ready (Draft)', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal mengubah status video', 'error');
+    }
+  };
+
+  const handleBulkSetReady = async (targetStatus) => {
+    setSaving(true);
+    try {
+      for (const id of selectedIds) {
+        await updateVideo(id, { isReady: targetStatus });
+      }
+      await loadVideos();
+      setSelectedIds([]);
+      showToast(`${selectedIds.length} video berhasil diubah statusnya menjadi ${targetStatus ? 'Ready' : 'Belum Ready'}`, 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal mengubah status masal video', 'error');
+    }
+    setSaving(false);
   };
 
   const handleSubmit = async (e) => {
@@ -338,7 +374,13 @@ export default function AdminVideosPage() {
                   <input type="checkbox" checked={selectedIds.length === filteredVideos.length} onChange={handleSelectAll} style={{ width: 16, height: 16, cursor: 'pointer' }} />
                   <span style={{ fontSize: 13, fontWeight: 500 }}>{selectedIds.length} video terpilih</span>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button onClick={() => handleBulkSetReady(true)} disabled={saving} className="btn-secondary" style={{ padding: '6px 12px', height: 32, fontSize: 12, color: '#10b981', borderColor: 'rgba(16,185,129,0.3)', backgroundColor: 'rgba(16,185,129,0.08)' }}>
+                    <CheckCircle2 size={13} style={{ marginRight: 4 }} /> Set Ready
+                  </button>
+                  <button onClick={() => handleBulkSetReady(false)} disabled={saving} className="btn-secondary" style={{ padding: '6px 12px', height: 32, fontSize: 12, color: '#f59e0b', borderColor: 'rgba(245,158,11,0.3)', backgroundColor: 'rgba(245,158,11,0.08)' }}>
+                    <Clock size={13} style={{ marginRight: 4 }} /> Set Belum Ready
+                  </button>
                   <button onClick={() => { setBulkMode('append'); setShowBulkForm(true); }} className="btn-secondary" style={{ padding: '6px 12px', height: 32, fontSize: 12 }}>+ Kategori</button>
                   <button onClick={() => { setBulkMode('overwrite'); setShowBulkForm(true); }} className="btn-secondary" style={{ padding: '6px 12px', height: 32, fontSize: 12 }}>Edit Kategori</button>
                   <button onClick={handleBulkDelete} disabled={saving} className="btn-primary" style={{ padding: '6px 12px', height: 32, fontSize: 12, backgroundColor: 'var(--error)' }}>Hapus</button>
@@ -428,6 +470,33 @@ export default function AdminVideosPage() {
                   <div className="caption" style={{ color: 'var(--muted-soft)' }}>
                     {videoCategories.find(c => c.value === video.category)?.label || video.category || 'Tanpa Kategori'}
                   </div>
+                </div>
+
+                {/* Status Ready Toggle Badge */}
+                <div style={{ flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleReady(video)}
+                    title={video.isReady !== false ? 'Klik untuk ubah ke Belum Ready (Draft)' : 'Klik untuk ubah ke Ready (Publikasi)'}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '4px 10px', borderRadius: 'var(--radius-pill)',
+                      fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer',
+                      backgroundColor: video.isReady !== false ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                      color: video.isReady !== false ? '#10b981' : '#f59e0b',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {video.isReady !== false ? (
+                      <>
+                        <CheckCircle2 size={13} /> Ready
+                      </>
+                    ) : (
+                      <>
+                        <Clock size={13} /> Belum Ready
+                      </>
+                    )}
+                  </button>
                 </div>
 
                 {/* Reorder Buttons (Up / Down) */}
@@ -528,7 +597,7 @@ export default function AdminVideosPage() {
                     )}
                   </div>
                 ))}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                   <div>
                     <label className="body-sm" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Kategori <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 400 }}>(Pisahkan dgn koma)</span>
@@ -539,6 +608,21 @@ export default function AdminVideosPage() {
                     <label className="body-sm" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>Urutan</label>
                     <input type="number" className="input" value={form.order} onChange={(e) => setForm({...form, order: parseInt(e.target.value) || 0})} />
                   </div>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label className="body-sm" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>
+                    Status Tayang (POV User)
+                  </label>
+                  <select
+                    className="input"
+                    value={form.isReady ? 'true' : 'false'}
+                    onChange={(e) => setForm({ ...form, isReady: e.target.value === 'true' })}
+                    style={{ height: 38 }}
+                  >
+                    <option value="true">✅ Ready (Tampilkan ke User)</option>
+                    <option value="false">⏳ Belum Ready / Draft (Sembunyikan dari User)</option>
+                  </select>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" className="btn-secondary" onClick={() => setShowForm(false)} style={{ flex: 1, justifyContent: 'center' }}>Batal</button>

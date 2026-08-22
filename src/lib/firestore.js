@@ -259,6 +259,7 @@ export async function getVideos(category) {
 
 export async function addVideo(data) {
   const res = await addDoc(collection(db, 'videos'), {
+    isReady: true,
     ...data,
     createdAt: serverTimestamp(),
   });
